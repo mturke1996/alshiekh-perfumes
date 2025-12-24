@@ -12,6 +12,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { Review } from '../types/perfume-shop';
+import { Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import MaterialRipple from './MaterialRipple';
@@ -68,7 +69,13 @@ export default function ReviewSystem({
           return b.rating - a.rating;
         case 'recent':
         default:
-          return (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0);
+          const dateA = a.createdAt instanceof Timestamp 
+            ? a.createdAt.toMillis() 
+            : (a.createdAt instanceof Date ? a.createdAt.getTime() : 0);
+          const dateB = b.createdAt instanceof Timestamp 
+            ? b.createdAt.toMillis() 
+            : (b.createdAt instanceof Date ? b.createdAt.getTime() : 0);
+          return dateB - dateA;
       }
     });
 
@@ -397,7 +404,9 @@ export default function ReviewSystem({
                       </div>
                       <span className="text-sm text-gray-500">
                         {review.createdAt && format(
-                          review.createdAt.toDate(),
+                          review.createdAt instanceof Timestamp 
+                            ? review.createdAt.toDate() 
+                            : (review.createdAt instanceof Date ? review.createdAt : new Date()),
                           'd MMMM yyyy',
                           { locale: ar }
                         )}

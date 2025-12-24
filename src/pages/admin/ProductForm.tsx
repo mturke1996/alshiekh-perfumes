@@ -252,14 +252,17 @@ export default function ProductForm() {
                 </label>
                 <select
                   value={product.category || 'perfume'}
-                  onChange={(e) => setProduct({ 
-                    ...product, 
-                    category: e.target.value,
-                    categoryAr: e.target.value === 'perfume' ? 'عطور' : 
-                               e.target.value === 'makeup' ? 'مكياج' : 
-                               e.target.value === 'skincare' ? 'العناية بالبشرة' : 
-                               e.target.value === 'haircare' ? 'العناية بالشعر' : 'طقم هدايا'
-                  })}
+                  onChange={(e) => {
+                    const value = e.target.value as "perfume" | "makeup" | "skincare" | "haircare" | "gift-set";
+                    setProduct({ 
+                      ...product, 
+                      category: value,
+                      categoryAr: value === 'perfume' ? 'عطور' : 
+                                 value === 'makeup' ? 'مكياج' : 
+                                 value === 'skincare' ? 'العناية بالبشرة' : 
+                                 value === 'haircare' ? 'العناية بالشعر' : 'طقم هدايا'
+                    });
+                  }}
                   className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-maroon-500"
                 >
                   <option value="perfume">عطور</option>

@@ -91,6 +91,7 @@ export interface Product {
   views?: number;
   wishlistCount?: number;
   purchaseCount?: number;
+  totalSales?: number;
 }
 
 // ============================================
@@ -331,12 +332,14 @@ export interface ProductFilters {
   size?: string[];
   concentration?: string[];
   fragranceFamily?: string[];
+  productType?: string[];
   rating?: number;
   inStock?: boolean;
   featured?: boolean;
   isNew?: boolean;
   isBestSeller?: boolean;
   discount?: boolean;
+  onSale?: boolean;
 
   // Perfume specific
   occasion?: string[];
@@ -400,8 +403,14 @@ export interface DashboardStats {
 
   // Top performing
   topProducts?: Product[];
+  popularProducts?: Product[];
   topCategories?: { category: string; sales: number; revenue: number }[];
   topBrands?: { brand: string; sales: number; revenue: number }[];
+  recentOrders?: Order[];
+  recentReviews?: Review[];
+  todayRevenue?: number;
+  todayOrders?: number;
+  monthlyOrders?: number;
 
   // Charts data
   revenueChart?: { date: string; revenue: number }[];

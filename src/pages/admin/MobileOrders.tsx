@@ -17,13 +17,14 @@ import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 
-const statusConfig = {
+const statusConfig: Record<Order['status'], { label: string; color: string; border?: string; icon: any }> = {
   pending: { label: 'جديد', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Clock },
   confirmed: { label: 'مؤكد', color: 'bg-yellow-100 text-yellow-700 border-yellow-200', icon: CheckCircle },
   processing: { label: 'قيد المعالجة', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: Clock },
   shipped: { label: 'تم الشحن', color: 'bg-indigo-100 text-indigo-700 border-indigo-200', icon: Truck },
   delivered: { label: 'تم التوصيل', color: 'bg-green-100 text-green-700 border-green-200', icon: CheckCircle },
   cancelled: { label: 'ملغى', color: 'bg-red-100 text-red-700 border-red-200', icon: CheckCircle },
+  refunded: { label: 'مسترد', color: 'bg-orange-100 text-orange-700 border-orange-200', icon: CheckCircle },
 };
 
 export default function MobileOrders() {
@@ -106,7 +107,7 @@ export default function MobileOrders() {
         <div className="flex items-center gap-2 py-2 border-t border-gray-100 mb-2">
           <MapPin size={14} className="text-gray-400" />
           <span className="text-xs text-gray-600 flex-1">
-            {order.shippingAddress?.city} - {order.shippingAddress?.address}
+            {order.shippingAddress?.city} - {order.shippingAddress?.addressLine1}
           </span>
         </div>
 
@@ -198,7 +199,7 @@ export default function MobileOrders() {
                 <div className="pt-2 border-t border-gray-200">
                   <span className="text-sm text-gray-500 block mb-1">العنوان</span>
                   <span className="text-sm text-gray-900">
-                    {selectedOrder.shippingAddress?.city} - {selectedOrder.shippingAddress?.address}
+                    {selectedOrder.shippingAddress?.city} - {selectedOrder.shippingAddress?.addressLine1}
                   </span>
                 </div>
               </div>
@@ -210,7 +211,7 @@ export default function MobileOrders() {
                   {selectedOrder.items?.map((item, index) => (
                     <div key={index} className="flex items-center justify-between pb-3 border-b border-gray-200 last:border-0 last:pb-0">
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{item.product.nameAr || item.product.name}</p>
+                        <p className="text-sm font-medium text-gray-900">{item.productNameAr || item.productName}</p>
                         <p className="text-xs text-gray-500 mt-0.5">الكمية: {item.quantity}</p>
                       </div>
                       <p className="text-sm font-bold text-gray-900">{item.price?.toFixed(0) || 0} IQD</p>

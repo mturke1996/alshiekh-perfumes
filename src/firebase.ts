@@ -1,8 +1,8 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
-import { getStorage, connectStorageEmulator } from 'firebase/storage';
-import { getAnalytics, isSupported } from 'firebase/analytics';
+import { initializeApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
+import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getStorage, type FirebaseStorage } from 'firebase/storage';
+import { getAnalytics, isSupported, type Analytics } from 'firebase/analytics';
 
 // إعدادات Firebase لمشروع Al Sheikh Perfumes
 // استخدام القيم من .env فقط إذا كانت صحيحة (ليست القيم الافتراضية)
@@ -36,12 +36,6 @@ if (!isFirebaseConfigured) {
 }
 
 // Initialize Firebase
-import type { FirebaseApp } from 'firebase/app';
-import type { Auth } from 'firebase/auth';
-import type { Firestore } from 'firebase/firestore';
-import type { FirebaseStorage } from 'firebase/storage';
-import type { Analytics } from 'firebase/analytics';
-
 let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
