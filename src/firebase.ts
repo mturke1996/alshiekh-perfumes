@@ -36,11 +36,17 @@ if (!isFirebaseConfigured) {
 }
 
 // Initialize Firebase
-let app;
-let auth;
-let db;
-let storage;
-let analytics;
+import type { FirebaseApp } from 'firebase/app';
+import type { Auth } from 'firebase/auth';
+import type { Firestore } from 'firebase/firestore';
+import type { FirebaseStorage } from 'firebase/storage';
+import type { Analytics } from 'firebase/analytics';
+
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
+let storage: FirebaseStorage;
+let analytics: Analytics | undefined;
 
 try {
   app = initializeApp(firebaseConfig);
