@@ -1,0 +1,78 @@
+/* Custom Pagination Styles for Luxury Hero Carousel */
+
+:root {
+  --swiper-pagination-bottom: 2rem;
+  --swiper-pagination-bullet-size: 12px;
+  --swiper-pagination-bullet-horizontal-gap: 8px;
+}
+
+.hero-pagination-bullet {
+  width: var(--swiper-pagination-bullet-size);
+  height: var(--swiper-pagination-bullet-size);
+  background: rgba(255, 255, 255, 0.3);
+  opacity: 1;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.hero-pagination-bullet:hover {
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(1.2);
+}
+
+.hero-pagination-bullet-active {
+  width: 40px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-color: #f59e0b;
+}
+
+/* Custom Navigation Button Hover Effects */
+.hero-button-prev,
+.hero-button-next {
+  transition: all 0.3s ease;
+}
+
+.hero-button-prev:hover,
+.hero-button-next:hover {
+  transform: translateY(-50%) scale(1.1);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  :root {
+    --swiper-pagination-bottom: 1rem;
+    --swiper-pagination-bullet-size: 8px;
+    --swiper-pagination-bullet-horizontal-gap: 6px;
+  }
+
+  .hero-pagination-bullet-active {
+    width: 28px;
+  }
+
+  .hero-button-prev,
+  .hero-button-next {
+    display: none;
+  }
+}
+
+/* Swiper Fade Effect Enhancement */
+.swiper-slide {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Luxury Loading Animation */
+@keyframes luxuryPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-luxury-pulse {
+  animation: luxuryPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+

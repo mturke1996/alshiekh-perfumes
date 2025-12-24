@@ -1,0 +1,70 @@
+/* Perfume Carousel Styles */
+.carousel-pagination-bullet {
+  width: 10px !important;
+  height: 10px !important;
+  background: rgba(255, 255, 255, 0.4) !important;
+  opacity: 1 !important;
+  margin: 0 6px !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border-radius: 50% !important;
+  border: 2px solid rgba(255, 255, 255, 0.6) !important;
+  cursor: pointer !important;
+}
+
+.carousel-pagination-bullet:hover {
+  background: rgba(255, 255, 255, 0.7) !important;
+  transform: scale(1.2) !important;
+}
+
+.carousel-pagination-bullet-active {
+  background: linear-gradient(135deg, #D4AF37, #F4D03F) !important;
+  width: 32px !important;
+  border-radius: 8px !important;
+  border-color: #D4AF37 !important;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.6) !important;
+}
+
+.carousel-button-prev,
+.carousel-button-next {
+  transition: all 0.3s ease;
+}
+
+.carousel-button-prev:hover,
+.carousel-button-next:hover {
+  transform: scale(1.1);
+}
+
+/* Swiper Navigation Overrides */
+.swiper-pagination {
+  bottom: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+}
+
+.swiper-pagination-bullet {
+  cursor: pointer !important;
+}
+
+/* Responsive adjustments - Mobile First */
+@media (max-width: 768px) {
+  .swiper-pagination {
+    bottom: 15px !important;
+    gap: 4px !important;
+  }
+  
+  .carousel-pagination-bullet {
+    width: 6px !important;
+    height: 6px !important;
+    margin: 0 3px !important;
+  }
+  
+  .carousel-pagination-bullet-active {
+    width: 20px !important;
+  }
+}
+

@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Products - anyone can read, only admins can write
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Orders - users can create, admins can read/update all
+    match /orders/{orderId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+    
+    // Reviews - anyone can read, authenticated users can create
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+    }
+    
+    // Users - users can only access their own data
+    match /users/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+    
+    // Admins collection - users can read and write their own document
+    match /admins/{adminId} {
+      allow read: if isAuthenticated() && request.auth.uid == adminId;
+      allow create, update: if isAuthenticated() && request.auth.uid == adminId;
+      allow delete: if false; // Prevent deletion from client
+    }
+    
+    // Banners - anyone can read, only admins can write
+    match /banners/{bannerId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Categories - anyone can read, only admins can write
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // Settings - anyone can read, only admins can write
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
+
