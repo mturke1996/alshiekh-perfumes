@@ -7,7 +7,14 @@ import {
   Image as ImageIcon,
   ArrowLeft
 } from 'lucide-react';
-import { doc, getDoc, addDoc, updateDoc, collection, Timestamp } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  addDoc,
+  updateDoc,
+  collection,
+  Timestamp
+} from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Product } from '../../types/perfume-shop';
 import toast from 'react-hot-toast';
@@ -42,9 +49,7 @@ export default function ProductForm() {
   });
 
   useEffect(() => {
-    if (isEditing && id) {
-      loadProduct();
-    }
+    if (isEditing && id) loadProduct();
   }, [id, isEditing]);
 
   const loadProduct = async () => {
@@ -57,16 +62,16 @@ export default function ProductForm() {
         toast.error('المنتج غير موجود');
         navigate('/admin/products');
       }
-    } catch (error) {
+    } catch {
       toast.error('حدث خطأ في تحميل المنتج');
     } finally {
       setLoading(false);
     }
   };
 
-  /* =======================
+  /* =====================
      إضافة صورة عبر رابط
-  ======================= */
+  ===================== */
   const addImageByUrl = () => {
     if (!imageUrl.trim()) {
       toast.error('يرجى إدخال رابط الصورة');
@@ -85,7 +90,6 @@ export default function ProductForm() {
     }));
 
     setImageUrl('');
-    toast.success('تمت إضافة الصورة');
   };
 
   const removeImage = (index: number) => {
@@ -96,7 +100,7 @@ export default function ProductForm() {
     setProduct(prev => ({
       ...prev,
       images: newImages,
-      thumbnail: prev.thumbnail === removed ? (newImages[0] || '') : prev.thumbnail
+      thumbnail: prev.thumbnail === removed ? newImages[0] || '' : prev.thumbnail
     }));
   };
 
@@ -139,7 +143,7 @@ export default function ProductForm() {
       }
 
       navigate('/admin/products');
-    } catch (error) {
+    } catch {
       toast.error('حدث خطأ أثناء الحفظ');
     } finally {
       setLoading(false);
@@ -147,21 +151,22 @@ export default function ProductForm() {
   };
 
   return (
-    <div className="space-y-4 pb-6">
+    <div className="space-y-4 pb-4">
       {/* Header */}
       <div className="flex items-center gap-3">
         <button onClick={() => navigate('/admin/products')}>
           <ArrowLeft />
         </button>
         <h2 className="text-xl font-bold">
-          {isEditing ? 'تعديل المنتج' : 'إضافة منتج'}
+          {isEditing ? 'تعديل المنتج' : 'إضافة منتج جديد'}
         </h2>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+
         {/* Images */}
-        <div className="bg-white p-4 rounded-xl border">
-          <h3 className="font-bold mb-3">صور المنتج</h3>
+        <div className="bg-white rounded-2xl p-4 border shadow-sm">
+          <h3 className="font-bold mb-4">صور المنتج</h3>
 
           <div className="flex gap-2 mb-4">
             <input
@@ -169,12 +174,12 @@ export default function ProductForm() {
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
               placeholder="https://example.com/image.jpg"
-              className="flex-1 px-4 py-3 border rounded-xl"
+              className="flex-1 px-4 py-3 bg-gray-50 rounded-xl border"
             />
             <button
               type="button"
               onClick={addImageByUrl}
-              className="px-4 py-3 bg-brand-maroon-600 text-white rounded-xl"
+              className="px-4 py-3 bg-brand-maroon-600 text-white rounded-xl font-bold"
             >
               إضافة
             </button>
@@ -182,11 +187,13 @@ export default function ProductForm() {
 
           <div className="grid grid-cols-3 gap-3">
             {(product.images || []).map((url, index) => (
-              <div key={index} className="relative">
+              <div key={index} className="relative group">
                 <img
                   src={url}
                   className={`w-full h-24 object-cover rounded-xl border-2 ${
-                    product.thumbnail === url ? 'border-brand-maroon-600' : 'border-gray-200'
+                    product.thumbnail === url
+                      ? 'border-brand-maroon-600'
+                      : 'border-gray-200'
                   }`}
                 />
 
@@ -199,7 +206,7 @@ export default function ProductForm() {
                 <button
                   type="button"
                   onClick={() => setThumbnail(url)}
-                  className="absolute bottom-1 right-1 bg-brand-maroon-600 text-white p-1 rounded"
+                  className="absolute bottom-1 right-1 p-1 bg-brand-maroon-600 text-white rounded"
                 >
                   <ImageIcon size={14} />
                 </button>
@@ -207,7 +214,7 @@ export default function ProductForm() {
                 <button
                   type="button"
                   onClick={() => removeImage(index)}
-                  className="absolute top-1 left-1 bg-red-600 text-white p-1 rounded"
+                  className="absolute top-1 left-1 p-1 bg-red-600 text-white rounded"
                 >
                   <X size={14} />
                 </button>
