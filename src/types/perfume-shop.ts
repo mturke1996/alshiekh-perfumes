@@ -555,11 +555,46 @@ export interface SiteSettings {
   telegramBotToken?: string;
   telegramChatId?: string;
   emailNotifications?: boolean;
+  telegramChats?: TelegramChat[];
+  
+  // Hero Images
+  heroImages?: string[];
 
   // Maintenance
   maintenanceMode?: boolean;
   maintenanceMessage?: string;
   maintenanceMessageAr?: string;
 
+  updatedAt?: Timestamp;
+}
+
+// ============================================
+// Telegram Chat Types
+// ============================================
+
+export interface TelegramChat {
+  id: string;
+  name: string;
+  chatId: string;
+  active: boolean;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+// ============================================
+// Contact Message Types
+// ============================================
+
+export interface ContactMessage {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  subject: string;
+  message: string;
+  read: boolean;
+  replied?: boolean;
+  replyMessage?: string;
+  createdAt: Timestamp;
   updatedAt?: Timestamp;
 }

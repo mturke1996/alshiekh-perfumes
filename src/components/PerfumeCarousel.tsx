@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade, Pagination, Navigation } from 'swiper/modules';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 // Import Swiper styles
 import 'swiper/css';
@@ -55,6 +57,63 @@ const carouselSlides: CarouselSlide[] = [
 
 export default function PerfumeCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [slides, setSlides] = useState<CarouselSlide[]>(carouselSlides);
+  const [loading, setLoading] = useState(true);
+  const [swiperKey, setSwiperKey] = useState(0);
+
+  useEffect(() => {
+    loadHeroImages();
+    
+    // Listen for hero images updates
+    const handleHeroImagesUpdate = () => {
+      console.log('Hero images updated event received');
+      loadHeroImages();
+    };
+    
+    window.addEventListener('heroImagesUpdated', handleHeroImagesUpdate);
+    
+    return () => {
+      window.removeEventListener('heroImagesUpdated', handleHeroImagesUpdate);
+    };
+  }, []);
+
+  const loadHeroImages = async () => {
+    try {
+      setLoading(true);
+      
+      // Load hero images from settings first
+      const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+      if (settingsDoc.exists()) {
+        const settingsData = settingsDoc.data();
+        const heroImages = settingsData.heroImages || [];
+        
+        if (heroImages && heroImages.length > 0) {
+          console.log('Loading hero images from settings:', heroImages.length);
+          
+          // Convert hero images to slides
+          const heroSlides: CarouselSlide[] = heroImages.map((image: string, index: number) => ({
+            id: `hero-${index}`,
+            image: image,
+            title: '',
+            link: '/products',
+          }));
+          
+          setSlides(heroSlides);
+          setSwiperKey(prev => prev + 1); // Force Swiper re-render
+          setLoading(false);
+          return;
+        }
+      }
+
+      console.log('No hero images in settings, using default slides');
+      setSlides(carouselSlides);
+    } catch (error) {
+      console.error('Error loading hero images:', error);
+      setSlides(carouselSlides);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Helper function to get image path with fallback
   const getImagePath = (path: string) => {
@@ -69,9 +128,20 @@ export default function PerfumeCarousel() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="relative w-screen h-[75vh] min-h-[550px] max-h-[850px] overflow-hidden mt-0 shadow-2xl bg-gray-100" style={{ marginLeft: 'calc(-50vw + 50%)', width: '100vw', position: 'relative', left: '50%', right: '50%', marginRight: '-50vw' }}>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-maroon-600"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-screen h-[75vh] min-h-[550px] max-h-[850px] overflow-hidden mt-0 shadow-2xl" style={{ marginLeft: 'calc(-50vw + 50%)', width: '100vw', position: 'relative', left: '50%', right: '50%', marginRight: '-50vw' }}>
       <Swiper
+        key={swiperKey}
         modules={[Autoplay, EffectFade, Pagination, Navigation]}
         effect="fade"
         speed={1000}
@@ -92,11 +162,11 @@ export default function PerfumeCarousel() {
           nextEl: '.carousel-button-next',
           prevEl: '.carousel-button-prev',
         }}
-        loop={true}
+        loop={slides.length > 1}
         onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
         className="h-full w-full"
       >
-        {carouselSlides.map((slide, index) => (
+        {slides.map((slide, index) => (
           <SwiperSlide key={slide.id}>
             <div className="relative h-full w-full group">
               {/* Background Image - Full Screen, No Overlays */}

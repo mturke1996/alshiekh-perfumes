@@ -4,7 +4,7 @@ import { Autoplay, EffectFade, Pagination, Navigation } from 'swiper/modules';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Banner } from '../types/perfume-shop';
 
@@ -77,10 +77,59 @@ export default function LuxuryHeroCarousel() {
 
   useEffect(() => {
     loadBanners();
+    
+    // Listen for hero images updates
+    const handleHeroImagesUpdate = () => {
+      loadBanners();
+    };
+    
+    window.addEventListener('heroImagesUpdated', handleHeroImagesUpdate);
+    
+    return () => {
+      window.removeEventListener('heroImagesUpdated', handleHeroImagesUpdate);
+    };
   }, []);
 
   const loadBanners = async () => {
     try {
+      setLoading(true);
+      
+      // Load hero images from settings first
+      const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+      if (settingsDoc.exists()) {
+        const settingsData = settingsDoc.data();
+        const heroImages = settingsData.heroImages || [];
+        
+        if (heroImages && heroImages.length > 0) {
+          console.log('Loading hero images from settings:', heroImages.length);
+          
+          // Convert hero images to slides
+          const heroSlides: HeroSlide[] = heroImages.map((image: string, index: number) => ({
+            id: `hero-${index}`,
+            title: '',
+            titleAr: '',
+            subtitle: '',
+            subtitleAr: '',
+            image: image,
+            imageMobile: image,
+            link: '/products',
+            buttonText: 'Shop Now',
+            buttonTextAr: 'تسوق الآن',
+            position: 'hero',
+            priority: index + 1,
+            active: true,
+            createdAt: null as any,
+          }));
+          
+          setSlides(heroSlides);
+          setLoading(false);
+          return;
+        }
+      }
+
+      console.log('No hero images in settings, loading banners...');
+
+      // Fallback to banners
       const bannersRef = collection(db, 'banners');
       const q = query(
         bannersRef,
@@ -98,10 +147,15 @@ export default function LuxuryHeroCarousel() {
         })) as HeroSlide[];
 
         setSlides(bannerData);
+      } else {
+        // Use default slides if no banners found
+        console.log('No banners found, using default slides');
+        setSlides(defaultSlides);
       }
     } catch (error) {
-      console.log('Using default slides:', error);
+      console.error('Error loading banners:', error);
       // في حالة عدم وجود Firebase أو خطأ، نستخدم الصور الافتراضية
+      setSlides(defaultSlides);
     } finally {
       setLoading(false);
     }

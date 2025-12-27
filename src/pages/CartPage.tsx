@@ -80,17 +80,25 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-32">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
+      <div className="bg-white/95 backdrop-blur-xl border-b border-gray-200/50 sticky top-0 z-40 shadow-sm">
         <div className="flex items-center justify-between p-4">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors active:scale-95"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={24} className="text-gray-700" />
           </button>
-          <h1 className="text-lg font-bold text-gray-900">سلة التسوق</h1>
+          <div className="flex items-center gap-2">
+            <ShoppingCart className="text-brand-maroon-600" size={22} />
+            <h1 className="text-lg font-bold text-gray-900">سلة التسوق</h1>
+            {items.length > 0 && (
+              <span className="bg-brand-maroon-600 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                {items.length}
+              </span>
+            )}
+          </div>
           {items.length > 0 && (
             <button
               onClick={() => {
@@ -99,7 +107,7 @@ export default function CartPage() {
                   toast.success('تم حذف جميع المنتجات');
                 }
               }}
-              className="text-red-600 text-sm font-medium"
+              className="text-red-600 text-sm font-medium hover:text-red-700 active:scale-95 transition-all"
             >
               مسح الكل
             </button>
@@ -107,7 +115,7 @@ export default function CartPage() {
         </div>
       </div>
 
-      <div className="space-y-4 px-4 py-6">
+      <div className="space-y-3 px-4 py-4">
         {/* Cart Items */}
         <AnimatePresence>
           {items.map((item, index) => {
@@ -119,88 +127,90 @@ export default function CartPage() {
             return (
               <motion.div
                 key={product.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95, x: 20 }}
+                transition={{ delay: index * 0.03, type: "spring", stiffness: 300 }}
+                className="bg-white rounded-2xl p-4 shadow-md border border-gray-100 hover:shadow-lg transition-all active:scale-[0.98]"
               >
-                <div className="flex gap-4">
+                <div className="flex gap-3">
                   {/* Product Image */}
                   <Link
                     to={`/product/${product.id}`}
-                    className="relative w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0"
+                    className="relative w-28 h-28 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 flex-shrink-0 group"
                   >
                     <img
                       src={product.thumbnail || product.images[0]}
                       alt={product.nameAr}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                     {product.discount && (
-                      <div className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                      <div className="absolute top-2 right-2 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs px-2.5 py-1 rounded-full font-bold shadow-md">
                         -{product.discount}%
                       </div>
                     )}
                   </Link>
 
                   {/* Product Info */}
-                  <div className="flex-1 min-w-0">
-                    <Link to={`/product/${product.id}`}>
-                      <h3 className="font-bold text-gray-900 mb-1 line-clamp-2 hover:text-brand-maroon-600 transition-colors">
-                        {product.nameAr || product.name}
-                      </h3>
-                    </Link>
-                    <p className="text-xs text-gray-500 mb-2">{product.brandAr || product.brand}</p>
+                  <div className="flex-1 min-w-0 flex flex-col justify-between">
+                    <div>
+                      <Link to={`/product/${product.id}`}>
+                        <h3 className="font-bold text-gray-900 mb-1 line-clamp-2 hover:text-brand-maroon-600 transition-colors text-base leading-tight">
+                          {product.nameAr || product.name}
+                        </h3>
+                      </Link>
+                      <p className="text-xs text-gray-500 mb-2">{product.brandAr || product.brand}</p>
 
-                    {/* Price */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-lg font-bold text-brand-maroon-600">
-                        {formatCurrency(finalPrice, 'LYD')}
-                      </span>
-                      {product.discount && (
-                        <span className="text-sm text-gray-400 line-through">
-                          {formatCurrency(product.price, 'LYD')}
+                      {/* Price */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-xl font-bold text-brand-maroon-600">
+                          {formatCurrency(finalPrice, 'LYD')}
                         </span>
-                      )}
+                        {product.discount && (
+                          <span className="text-sm text-gray-400 line-through">
+                            {formatCurrency(product.price, 'LYD')}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Quantity Controls */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 bg-gray-100 rounded-xl p-1">
+                    {/* Quantity Controls & Actions */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-1 border border-gray-200">
+                          <button
+                            onClick={() => handleQuantityChange(product.id, item.quantity - 1)}
+                            className="w-9 h-9 rounded-lg bg-white flex items-center justify-center hover:bg-brand-maroon-50 hover:text-brand-maroon-600 active:scale-90 transition-all shadow-sm"
+                          >
+                            <Minus size={16} className="text-gray-700" />
+                          </button>
+                          <span className="text-sm font-bold text-gray-900 w-10 text-center">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => handleQuantityChange(product.id, item.quantity + 1)}
+                            className="w-9 h-9 rounded-lg bg-white flex items-center justify-center hover:bg-brand-maroon-50 hover:text-brand-maroon-600 active:scale-90 transition-all shadow-sm"
+                          >
+                            <Plus size={16} className="text-gray-700" />
+                          </button>
+                        </div>
+
+                        {/* Remove Button */}
                         <button
-                          onClick={() => handleQuantityChange(product.id, item.quantity - 1)}
-                          className="w-8 h-8 rounded-lg bg-white flex items-center justify-center hover:bg-gray-50 active:scale-95 transition-all"
+                          onClick={() => {
+                            removeItem(product.id);
+                            toast.success('تم حذف المنتج');
+                          }}
+                          className="p-2.5 text-red-600 hover:bg-red-50 rounded-xl transition-all active:scale-90"
                         >
-                          <Minus size={16} className="text-gray-600" />
-                        </button>
-                        <span className="text-sm font-bold text-gray-900 w-8 text-center">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() => handleQuantityChange(product.id, item.quantity + 1)}
-                          className="w-8 h-8 rounded-lg bg-white flex items-center justify-center hover:bg-gray-50 active:scale-95 transition-all"
-                        >
-                          <Plus size={16} className="text-gray-600" />
+                          <Trash2 size={18} />
                         </button>
                       </div>
 
-                      {/* Remove Button */}
-                      <button
-                        onClick={() => {
-                          removeItem(product.id);
-                          toast.success('تم حذف المنتج');
-                        }}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-
-                    {/* Item Total */}
-                    <div className="mt-3 pt-3 border-t border-gray-100">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">الإجمالي:</span>
-                        <span className="text-base font-bold text-gray-900">
+                      {/* Item Total */}
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                        <span className="text-sm text-gray-500 font-medium">الإجمالي:</span>
+                        <span className="text-lg font-bold text-brand-maroon-600">
                           {formatCurrency(finalPrice * item.quantity, 'LYD')}
                         </span>
                       </div>
@@ -212,59 +222,36 @@ export default function CartPage() {
           })}
         </AnimatePresence>
 
-        {/* Summary Card */}
+        {/* Summary Card - Compact */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky bottom-20"
+          className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 sticky bottom-20"
         >
-          <h3 className="text-lg font-bold text-gray-900 mb-4">ملخص الطلب</h3>
-          
-          <div className="space-y-3 mb-4">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">عدد المنتجات:</span>
-              <span className="font-medium text-gray-900">{items.length} منتج</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-600">الكمية الإجمالية:</span>
-              <span className="font-medium text-gray-900">
-                {items.reduce((sum, item) => sum + item.quantity, 0)} قطعة
-              </span>
-            </div>
-            <div className="border-t border-gray-200 pt-3">
-              <div className="flex items-center justify-between">
-                <span className="text-lg font-bold text-gray-900">الإجمالي:</span>
-                <span className="text-2xl font-bold text-brand-maroon-600">
-                  {formatCurrency(total, 'LYD')}
-                </span>
-              </div>
-            </div>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-gray-600">الإجمالي:</span>
+            <span className="text-2xl font-bold text-brand-maroon-600">
+              {formatCurrency(total, 'LYD')}
+            </span>
           </div>
 
           <button
             onClick={handleCheckout}
             disabled={loading}
-            className="w-full py-4 bg-gradient-to-r from-brand-maroon-600 to-brand-maroon-700 text-white rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-gradient-to-r from-brand-maroon-600 to-brand-maroon-700 text-white rounded-xl font-bold shadow-lg hover:shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                 <span>جاري المعالجة...</span>
               </>
             ) : (
               <>
-                <ShoppingCart size={24} />
+                <ShoppingCart size={20} />
                 <span>إتمام الطلب</span>
               </>
             )}
           </button>
-
-          <Link
-            to="/products"
-            className="block mt-4 text-center text-brand-maroon-600 font-medium hover:underline"
-          >
-            ← إضافة المزيد من المنتجات
-          </Link>
         </motion.div>
       </div>
     </div>

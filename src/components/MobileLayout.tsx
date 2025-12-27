@@ -9,7 +9,8 @@ import {
   User,
   Menu,
   X,
-  ShoppingCart
+  ShoppingCart,
+  MessageCircle
 } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { useFavoritesStore } from '../store/favoritesStore';
@@ -19,9 +20,9 @@ import BrandLogo from './BrandLogo';
 const tabs = [
   { id: 'home', label: 'الرئيسية', icon: Home, path: '/' },
   { id: 'products', label: 'العطور', icon: ShoppingBag, path: '/products' },
-  { id: 'search', label: 'بحث', icon: Search, path: '/search' },
+  { id: 'search', label: 'بحث', icon: Search, path: '/products' },
   { id: 'favorites', label: 'المفضلة', icon: Heart, path: '/favorites' },
-  { id: 'profile', label: 'الحساب', icon: User, path: '/profile' },
+  { id: 'contact', label: 'تواصل', icon: MessageCircle, path: '/contact' },
 ];
 
 export default function MobileLayout() {
@@ -36,14 +37,13 @@ export default function MobileLayout() {
     if (tab.path === '/') {
       return location.pathname === '/';
     }
+    if (tab.id === 'search') {
+      return location.pathname === '/products';
+    }
     return location.pathname.startsWith(tab.path);
   })?.id || 'home';
 
   const handleTabClick = (path: string) => {
-    if (path === '/search') {
-      // Handle search action
-      return;
-    }
     navigate(path);
   };
 
@@ -53,7 +53,7 @@ export default function MobileLayout() {
       <motion.header
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-200/50 shadow-sm"
+        className="sticky top-0 z-50 bg-white/98 backdrop-blur-xl border-b border-gray-100 shadow-sm"
       >
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
@@ -183,8 +183,8 @@ export default function MobileLayout() {
                   onClick={() => setSidebarOpen(false)}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors"
                 >
-                  <User size={22} />
-                  <span className="font-medium">اتصل بنا</span>
+                  <MessageCircle size={22} />
+                  <span className="font-medium">تواصل معنا</span>
                 </Link>
               </nav>
 
@@ -219,10 +219,10 @@ export default function MobileLayout() {
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
           >
             <Outlet />
           </motion.div>
@@ -233,11 +233,11 @@ export default function MobileLayout() {
       <motion.nav
         initial={{ y: 100 }}
         animate={{ y: 0 }}
-        className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-200/50 shadow-lg z-40"
+        className="fixed bottom-0 left-0 right-0 bg-white/98 backdrop-blur-xl border-t border-gray-100 shadow-lg z-40"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         <div className="flex items-center justify-around px-2 py-2 max-w-md mx-auto">
-          {tabs.map((tab) => {
+            {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             
@@ -246,9 +246,13 @@ export default function MobileLayout() {
                 <button
                   key={tab.id}
                   onClick={() => handleTabClick(tab.path)}
-                  className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all relative"
+                  className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all relative active:scale-95"
                 >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-maroon-600 to-brand-gold-600 flex items-center justify-center shadow-lg">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all ${
+                    isActive 
+                      ? 'bg-gradient-to-br from-brand-maroon-600 to-brand-gold-600 scale-110' 
+                      : 'bg-gradient-to-br from-gray-400 to-gray-500'
+                  }`}>
                     <Icon size={22} className="text-white" />
                   </div>
                 </button>

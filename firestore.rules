@@ -22,10 +22,10 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     
-    // Orders - users can create, admins can read/update all
+    // Orders - anyone can read and create (for generating order numbers and creating orders)
     match /orders/{orderId} {
-      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
-      allow create: if isAuthenticated();
+      allow read: if true; // Allow reading to generate sequential order numbers
+      allow create: if true; // Allow anyone to create orders (including guest users)
       allow update, delete: if isAdmin();
     }
     
@@ -64,6 +64,18 @@ service cloud.firestore {
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+    
+    // Telegram Chats - anyone can read (for sending notifications), only admins can write
+    match /telegramChats/{chatId} {
+      allow read: if true; // Allow reading for sending Telegram notifications
+      allow write: if isAdmin();
+    }
+    
+    // Contact Messages - anyone can create, only admins can read/update/delete
+    match /contactMessages/{messageId} {
+      allow create: if true; // Allow anyone to send contact messages
+      allow read, update, delete: if isAdmin();
     }
   }
 }

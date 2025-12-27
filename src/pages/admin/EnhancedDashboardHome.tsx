@@ -312,7 +312,7 @@ export default function EnhancedDashboardHome() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="إجمالي الإيرادات"
-          value={`${stats.monthlyRevenue.toFixed(0)} IQD`}
+          value={`${stats.monthlyRevenue.toFixed(0)} د.ل`}
           icon={DollarSign}
           color="from-green-500 to-emerald-600"
           trend={stats.revenueGrowth >= 0 ? 'up' : 'down'}
@@ -344,7 +344,7 @@ export default function EnhancedDashboardHome() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="مبيعات اليوم"
-          value={`${stats.todayRevenue.toFixed(0)} IQD`}
+          value={`${stats.todayRevenue.toFixed(0)} د.ل`}
           icon={Activity}
           color="from-cyan-500 to-blue-500"
         />
@@ -455,7 +455,7 @@ export default function EnhancedDashboardHome() {
                 </div>
                 <div className="text-left">
                   <p className="font-bold text-gray-900">
-                    {product.revenue.toFixed(0)} IQD
+                    {product.revenue.toFixed(0)} د.ل
                   </p>
                   {product.rating && (
                     <div className="flex items-center gap-1">
@@ -494,7 +494,7 @@ export default function EnhancedDashboardHome() {
                 </div>
                 <div className="text-left">
                   <p className="font-bold text-gray-900">
-                    {order.total.toFixed(0)} IQD
+                    {order.total.toFixed(0)} د.ل
                   </p>
                   <span className={`text-xs px-2 py-1 rounded-full ${
                     order.status === 'delivered' 

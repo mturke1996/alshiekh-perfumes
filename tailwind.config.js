@@ -134,6 +134,10 @@ export default {
         'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
         'glow': '0 0 15px rgba(59, 130, 246, 0.5)',
         'glow-lg': '0 0 30px rgba(59, 130, 246, 0.6)',
+        'luxury': '0 20px 60px -15px rgba(139, 26, 26, 0.15), 0 10px 30px -10px rgba(139, 26, 26, 0.1)',
+        'gold': '0 10px 30px -10px rgba(212, 175, 55, 0.2)',
+        'maroon-glow': '0 0 20px rgba(139, 26, 26, 0.3)',
+        'gold-glow': '0 0 20px rgba(212, 175, 55, 0.4)',
       },
       backdropBlur: {
         xs: '2px',

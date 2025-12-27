@@ -23,9 +23,9 @@ import {
   orderBy,
   Timestamp,
 } from 'firebase/firestore';
-import { db, storage } from '../../firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db } from '../../firebase';
 import { Banner } from '../../types/perfume-shop';
+import { uploadImageToImgBB } from '../../utils/imgbb';
 import toast from 'react-hot-toast';
 
 export default function BannersManagement() {
@@ -80,15 +80,15 @@ export default function BannersManagement() {
   ) => {
     try {
       setUploading(true);
-      const storageRef = ref(storage, `banners/${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+      toast.loading('جاري رفع الصورة إلى imgBB...', { id: 'upload-banner' });
+      
+      const url = await uploadImageToImgBB(file);
 
       setFormData((prev) => ({ ...prev, [field]: url }));
-      toast.success('تم رفع الصورة بنجاح');
-    } catch (error) {
+      toast.success('تم رفع الصورة بنجاح', { id: 'upload-banner' });
+    } catch (error: any) {
       console.error('Error uploading image:', error);
-      toast.error('فشل رفع الصورة');
+      toast.error(error.message || 'فشل رفع الصورة', { id: 'upload-banner' });
     } finally {
       setUploading(false);
     }

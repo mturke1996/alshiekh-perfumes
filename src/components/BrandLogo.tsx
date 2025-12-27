@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 interface BrandLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showText?: boolean;
-  variant?: 'icon' | 'full' | 'text';
+  variant?: 'icon' | 'full' | 'text' | 'light';
   className?: string;
 }
 
@@ -81,28 +81,59 @@ export default function BrandLogo({
   }
 
   // Full variant
-  return (
-    <div className={`flex items-center gap-3 ${className}`}>
-      <LogoIcon />
-      {showText && (
-        <div>
-          <h1 className={`font-bold bg-gradient-to-r from-brand-maroon-600 to-brand-gold-600 bg-clip-text text-transparent ${
-            size === 'sm' ? 'text-xs' : 
-            size === 'md' ? 'text-sm' : 
-            size === 'lg' ? 'text-base' : 'text-lg'
-          }`}>
-            ALSHIEKH PARFUMES
-          </h1>
-          <p className={`text-gray-500 ${
-            size === 'sm' ? 'text-xs' : 
-            size === 'md' ? 'text-xs' : 
-            size === 'lg' ? 'text-sm' : 'text-base'
-          }`}>
-            الشيخ للعطور
-          </p>
-        </div>
-      )}
-    </div>
-  );
+  if (variant === 'full') {
+    return (
+      <div className={`flex items-center gap-3 ${className}`}>
+        <LogoIcon />
+        {showText && (
+          <div>
+            <h1 className={`font-bold bg-gradient-to-r from-brand-maroon-600 to-brand-gold-600 bg-clip-text text-transparent ${
+              size === 'sm' ? 'text-xs' : 
+              size === 'md' ? 'text-sm' : 
+              size === 'lg' ? 'text-base' : 'text-lg'
+            }`}>
+              ALSHIEKH PARFUMES
+            </h1>
+            <p className={`text-gray-500 ${
+              size === 'sm' ? 'text-xs' : 
+              size === 'md' ? 'text-xs' : 
+              size === 'lg' ? 'text-sm' : 'text-base'
+            }`}>
+              الشيخ للعطور
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Light variant (for dark backgrounds)
+  if (variant === 'light') {
+    return (
+      <div className={`flex items-center gap-3 ${className}`}>
+        <LogoIcon />
+        {showText && (
+          <div>
+            <h1 className={`font-bold text-white ${
+              size === 'sm' ? 'text-xs' : 
+              size === 'md' ? 'text-sm' : 
+              size === 'lg' ? 'text-base' : 'text-lg'
+            }`}>
+              ALSHIEKH PARFUMES
+            </h1>
+            <p className={`text-gray-400 ${
+              size === 'sm' ? 'text-xs' : 
+              size === 'md' ? 'text-xs' : 
+              size === 'lg' ? 'text-sm' : 'text-base'
+            }`}>
+              الشيخ للعطور
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return null;
 }
 

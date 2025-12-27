@@ -1,45 +1,49 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Heart, 
-  ShoppingCart, 
-  Eye, 
-  Star, 
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Heart,
+  ShoppingCart,
+  Eye,
+  Star,
   Sparkles,
   TrendingUp,
   Badge as BadgeIcon,
-  ArrowRight
-} from 'lucide-react';
-import { Product } from '../types/perfume-shop';
-import { useCartStore } from '../store/cartStore';
-import { useFavoritesStore } from '../store/favoritesStore';
-import { formatCurrency } from '../utils/helpers';
-import toast from 'react-hot-toast';
-import MaterialRipple from './MaterialRipple';
+  ArrowRight,
+} from "lucide-react";
+import { Product } from "../types/perfume-shop";
+import { useCartStore } from "../store/cartStore";
+import { useFavoritesStore } from "../store/favoritesStore";
+import { formatCurrency } from "../utils/helpers";
+import toast from "react-hot-toast";
+import MaterialRipple from "./MaterialRipple";
 
 interface EnhancedProductCardProps {
   product: Product;
-  view?: 'grid' | 'list';
+  view?: "grid" | "list";
   showQuickView?: boolean;
   onQuickView?: (product: Product) => void;
 }
 
-export default function EnhancedProductCard({ 
-  product, 
-  view = 'grid',
+export default function EnhancedProductCard({
+  product,
+  view = "grid",
   showQuickView = true,
-  onQuickView 
+  onQuickView,
 }: EnhancedProductCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageIndex, setImageIndex] = useState(0);
   const { addItem } = useCartStore();
-  const { items: favorites, addItem: addToFavorites, removeItem: removeFromFavorites } = useFavoritesStore();
+  const {
+    items: favorites,
+    addItem: addToFavorites,
+    removeItem: removeFromFavorites,
+  } = useFavoritesStore();
 
-  const isFavorite = favorites.some(fav => fav.id === product.id);
+  const isFavorite = favorites.some((fav) => fav.id === product.id);
   const hasDiscount = product.discount && product.discount > 0;
-  const finalPrice = hasDiscount 
-    ? product.price - (product.price * (product.discount / 100))
+  const finalPrice = hasDiscount
+    ? product.price - product.price * (product.discount / 100)
     : product.price;
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -47,14 +51,15 @@ export default function EnhancedProductCard({
     e.stopPropagation();
     if (product.inStock) {
       addItem({ product, quantity: 1 });
-      toast.success('تمت الإضافة إلى السلة بنجاح', {
-        icon: '🛒',
+      toast.success("✅ تمت الإضافة إلى السلة", {
+        icon: "🛒",
+        duration: 2000,
         style: {
-          fontFamily: 'Cairo, sans-serif',
-        }
+          fontFamily: "Cairo, sans-serif",
+        },
       });
     } else {
-      toast.error('المنتج غير متوفر حالياً');
+      toast.error("المنتج غير متوفر حالياً");
     }
   };
 
@@ -63,11 +68,11 @@ export default function EnhancedProductCard({
     e.stopPropagation();
     if (isFavorite) {
       removeFromFavorites(product.id);
-      toast.success('تم الإزالة من المفضلة');
+      toast.success("تم الإزالة من المفضلة");
     } else {
       addToFavorites(product);
-      toast.success('تمت الإضافة للمفضلة', {
-        icon: '❤️',
+      toast.success("تمت الإضافة للمفضلة", {
+        icon: "❤️",
       });
     }
   };
@@ -82,29 +87,41 @@ export default function EnhancedProductCard({
 
   const getBadges = () => {
     const badges = [];
-    if (product.isNew) badges.push({ text: 'جديد', color: 'bg-green-500', icon: Sparkles });
-    if (product.isBestSeller) badges.push({ text: 'الأكثر مبيعاً', color: 'bg-yellow-500', icon: TrendingUp });
-    if (product.isExclusive) badges.push({ text: 'حصري', color: 'bg-purple-500', icon: BadgeIcon });
-    if (hasDiscount) badges.push({ text: `-${product.discount}%`, color: 'bg-red-500', icon: null });
+    if (product.isNew)
+      badges.push({ text: "جديد", color: "bg-green-500", icon: Sparkles });
+    if (product.isBestSeller)
+      badges.push({
+        text: "الأكثر مبيعاً",
+        color: "bg-yellow-500",
+        icon: TrendingUp,
+      });
+    if (product.isExclusive)
+      badges.push({ text: "حصري", color: "bg-purple-500", icon: BadgeIcon });
+    if (hasDiscount)
+      badges.push({
+        text: `-${product.discount}%`,
+        color: "bg-red-500",
+        icon: null,
+      });
     return badges;
   };
 
   const badges = getBadges();
 
-  if (view === 'list') {
+  if (view === "list") {
     return (
       <motion.div
         layout
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
-        className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden"
+        className="bg-white rounded-2xl shadow-sm hover:shadow-luxury transition-all duration-500 overflow-hidden border border-gray-100 hover:border-brand-maroon-200 hover:-translate-y-1"
       >
         <Link to={`/product/${product.id}`} className="flex gap-6 p-6">
           {/* Image Section */}
           <div className="relative w-48 h-48 flex-shrink-0">
-            <img 
-              src={product.images[0] || product.thumbnail} 
+            <img
+              src={product.images[0] || product.thumbnail}
               alt={product.nameAr}
               className="w-full h-full object-cover rounded-xl"
             />
@@ -113,7 +130,7 @@ export default function EnhancedProductCard({
                 <span className="text-white font-bold text-lg">غير متوفر</span>
               </div>
             )}
-            
+
             {/* Badges */}
             <div className="absolute top-2 right-2 flex flex-col gap-2">
               {badges.map((badge, index) => (
@@ -136,7 +153,7 @@ export default function EnhancedProductCard({
             <div>
               {/* Brand */}
               <p className="text-sm text-gray-500 mb-1">{product.brandAr}</p>
-              
+
               {/* Title */}
               <h3 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
                 {product.nameAr}
@@ -150,7 +167,11 @@ export default function EnhancedProductCard({
                       <Star
                         key={i}
                         size={16}
-                        className={i < Math.floor(product.rating!) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+                        className={
+                          i < Math.floor(product.rating!)
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300"
+                        }
                       />
                     ))}
                   </div>
@@ -191,7 +212,7 @@ export default function EnhancedProductCard({
                 {hasDiscount ? (
                   <div className="flex items-center gap-3">
                     <span className="text-2xl font-bold text-red-600">
-                      {formatCurrency(finalPrice, 'LYD')}
+                      {formatCurrency(finalPrice, "LYD")}
                     </span>
                     <span className="text-lg text-gray-400 line-through">
                       {product.price.toFixed(2)}
@@ -199,7 +220,7 @@ export default function EnhancedProductCard({
                   </div>
                 ) : (
                   <span className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(product.price, 'LYD')}
+                    {formatCurrency(product.price, "LYD")}
                   </span>
                 )}
               </div>
@@ -209,12 +230,15 @@ export default function EnhancedProductCard({
                   <button
                     onClick={handleToggleFavorite}
                     className={`p-3 rounded-full transition-all ${
-                      isFavorite 
-                        ? 'bg-red-500 text-white' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      isFavorite
+                        ? "bg-red-500 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                   >
-                    <Heart size={20} fill={isFavorite ? 'currentColor' : 'none'} />
+                    <Heart
+                      size={20}
+                      fill={isFavorite ? "currentColor" : "none"}
+                    />
                   </button>
                 </MaterialRipple>
 
@@ -224,12 +248,12 @@ export default function EnhancedProductCard({
                     disabled={!product.inStock}
                     className={`px-6 py-3 rounded-full font-bold flex items-center gap-2 transition-all ${
                       product.inStock
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
                     }`}
                   >
                     <ShoppingCart size={20} />
-                    <span>{product.inStock ? 'أضف للسلة' : 'غير متوفر'}</span>
+                    <span>{product.inStock ? "أضف للسلة" : "غير متوفر"}</span>
                   </button>
                 </MaterialRipple>
               </div>
@@ -250,7 +274,7 @@ export default function EnhancedProductCard({
       whileHover={{ y: -8 }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
-      className="group relative bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden"
+      className="group relative bg-white rounded-2xl shadow-sm hover:shadow-luxury border border-gray-100 hover:border-brand-maroon-200 transition-all duration-500 overflow-hidden hover:-translate-y-1"
     >
       <Link to={`/product/${product.id}`}>
         {/* Image Container */}
@@ -283,8 +307,8 @@ export default function EnhancedProductCard({
                 key={index}
                 initial={{ scale: 0, x: 20 }}
                 animate={{ scale: 1, x: 0 }}
-                transition={{ delay: index * 0.1, type: 'spring' }}
-                className={`${badge.color} text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg backdrop-blur-sm`}
+                transition={{ delay: index * 0.1, type: "spring" }}
+                className={`${badge.color} text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-md backdrop-blur-sm border border-white/20`}
               >
                 {badge.icon && <badge.icon size={14} />}
                 {badge.text}
@@ -303,9 +327,9 @@ export default function EnhancedProductCard({
                     setImageIndex(idx);
                   }}
                   className={`w-2 h-2 rounded-full transition-all ${
-                    idx === imageIndex 
-                      ? 'bg-white w-6' 
-                      : 'bg-white/50 hover:bg-white/75'
+                    idx === imageIndex
+                      ? "bg-white w-6"
+                      : "bg-white/50 hover:bg-white/75"
                   }`}
                 />
               ))}
@@ -352,15 +376,28 @@ export default function EnhancedProductCard({
           <motion.button
             onClick={handleToggleFavorite}
             className={`absolute top-3 left-3 p-2.5 rounded-full backdrop-blur-sm transition-all z-10 ${
-              isFavorite 
-                ? 'bg-red-500 text-white' 
-                : 'bg-white/80 text-gray-600 hover:bg-white'
+              isFavorite
+                ? "bg-red-500 text-white"
+                : "bg-white/80 text-gray-600 hover:bg-white"
             }`}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            <Heart size={18} fill={isFavorite ? 'currentColor' : 'none'} />
+            <Heart size={18} fill={isFavorite ? "currentColor" : "none"} />
           </motion.button>
+
+          {/* Quick Add to Cart Button - Always Visible on Mobile */}
+          {product.inStock && (
+            <motion.button
+              onClick={handleAddToCart}
+              className="absolute bottom-3 right-3 p-3 bg-gradient-to-r from-brand-maroon-600 to-brand-maroon-700 text-white rounded-full shadow-lg z-10 hover:shadow-xl transition-all md:hidden"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              title="أضف للسلة"
+            >
+              <ShoppingCart size={18} />
+            </motion.button>
+          )}
         </div>
 
         {/* Content */}
@@ -383,7 +420,11 @@ export default function EnhancedProductCard({
                   <Star
                     key={i}
                     size={14}
-                    className={i < Math.floor(product.rating!) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+                    className={
+                      i < Math.floor(product.rating!)
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-gray-300"
+                    }
                   />
                 ))}
               </div>
@@ -413,7 +454,7 @@ export default function EnhancedProductCard({
               {hasDiscount ? (
                 <div className="flex flex-col">
                   <span className="text-lg font-bold text-red-600">
-                    {formatCurrency(finalPrice, 'LYD')}
+                    {formatCurrency(finalPrice, "LYD")}
                   </span>
                   <span className="text-xs text-gray-400 line-through">
                     {product.price.toFixed(0)}
@@ -421,15 +462,12 @@ export default function EnhancedProductCard({
                 </div>
               ) : (
                 <span className="text-lg font-bold text-gray-900">
-                  {formatCurrency(product.price, 'LYD')}
+                  {formatCurrency(product.price, "LYD")}
                 </span>
               )}
             </div>
 
-            <motion.div
-              whileHover={{ x: -5 }}
-              className="text-blue-600"
-            >
+            <motion.div whileHover={{ x: -5 }} className="text-blue-600">
               <ArrowRight size={20} />
             </motion.div>
           </div>
@@ -438,4 +476,3 @@ export default function EnhancedProductCard({
     </motion.div>
   );
 }
-

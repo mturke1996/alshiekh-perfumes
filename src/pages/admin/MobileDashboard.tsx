@@ -170,7 +170,7 @@ export default function MobileDashboard() {
         <StatCard
           title="إيرادات الشهر"
           value={`${(stats.monthlyRevenue / 1000).toFixed(1)}K`}
-          subtitle="IQD"
+          subtitle="د.ل"
           icon={DollarSign}
           color="bg-gradient-to-br from-green-500 to-emerald-600"
           trend={stats.revenueGrowth >= 0 ? 'up' : 'down'}

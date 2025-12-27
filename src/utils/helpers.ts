@@ -20,7 +20,8 @@ export const formatPrice = (price: number): string => {
  * تنسيق السعر مع العملة
  */
 export const formatCurrency = (price: number, currency: string = 'LYD'): string => {
-  return `${formatPrice(price)} ${currency}`;
+  const symbol = currency === 'LYD' ? 'د.ل' : currency;
+  return `${formatPrice(price)} ${symbol}`;
 };
 
 /**

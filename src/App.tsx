@@ -26,7 +26,9 @@ import MobileDashboard from "./pages/admin/MobileDashboard";
 import MobileOrders from "./pages/admin/MobileOrders";
 import MobileProducts from "./pages/admin/MobileProducts";
 import MobileCustomers from "./pages/admin/MobileCustomers";
+import TelegramManagement from "./pages/admin/TelegramManagement";
 import MobileSettings from "./pages/admin/MobileSettings";
+import MobileContactMessages from "./pages/admin/MobileContactMessages";
 import ProductForm from "./pages/admin/ProductForm";
 import { useTelegramNotification } from "./hooks/useTelegramNotification";
 
@@ -124,6 +126,8 @@ function App() {
           <Route path="products/new" element={<ProductForm />} />
           <Route path="products/edit/:id" element={<ProductForm />} />
           <Route path="customers" element={<MobileCustomers />} />
+          <Route path="messages" element={<MobileContactMessages />} />
+          <Route path="telegram" element={<TelegramManagement />} />
           <Route path="settings" element={<MobileSettings />} />
           {/* Legacy routes for backward compatibility */}
           <Route path="dashboard" element={<EnhancedDashboardHome />} />

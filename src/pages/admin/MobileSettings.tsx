@@ -1,36 +1,39 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Bell,
-  Bot,
   Save,
-  Key,
-  MessageSquare,
   Globe,
   Shield,
   Mail,
   Phone,
-  MapPin
-} from 'lucide-react';
-import { doc, getDoc, updateDoc, setDoc, Timestamp } from 'firebase/firestore';
-import { db } from '../../firebase';
-import { SiteSettings } from '../../types/perfume-shop';
-import toast from 'react-hot-toast';
+  MapPin,
+  Image as ImageIcon,
+  X,
+  Trash2,
+  Loader2,
+  Upload,
+} from "lucide-react";
+import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
+import { db } from "../../firebase";
+import { SiteSettings } from "../../types/perfume-shop";
+import { uploadMultipleImagesToImgBB } from "../../utils/imgbb";
+import toast from "react-hot-toast";
 
 export default function MobileSettings() {
   const [settings, setSettings] = useState<SiteSettings>({
-    storeName: 'ALSHIEKH PARFUMES',
-    storeNameAr: 'الشيخ للعطور',
-    email: '',
-    phone: '',
-    currency: 'LYD',
-    currencySymbol: 'د.ل',
-    telegramBotToken: '',
-    telegramChatId: '',
+    storeName: "ALSHIEKH PARFUMES",
+    storeNameAr: "الشيخ للعطور",
+    email: "",
+    phone: "",
+    currency: "LYD",
+    currencySymbol: "د.ل",
     emailNotifications: true,
+    heroImages: [],
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingHeroImages, setUploadingHeroImages] = useState(false);
 
   useEffect(() => {
     fetchSettings();
@@ -39,12 +42,17 @@ export default function MobileSettings() {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+      const settingsDoc = await getDoc(doc(db, "settings", "general"));
       if (settingsDoc.exists()) {
-        setSettings(settingsDoc.data() as SiteSettings);
+        const data = settingsDoc.data() as SiteSettings;
+        setSettings({
+          ...settings,
+          ...data,
+          heroImages: data.heroImages || [],
+        });
       }
     } catch (error) {
-      console.error('Error fetching settings:', error);
+      console.error("Error fetching settings:", error);
     } finally {
       setLoading(false);
     }
@@ -53,21 +61,110 @@ export default function MobileSettings() {
   const saveSettings = async () => {
     try {
       setSaving(true);
-      const settingsRef = doc(db, 'settings', 'general');
-      await setDoc(settingsRef, {
-        ...settings,
-        updatedAt: Timestamp.now(),
-      }, { merge: true });
-      toast.success('تم حفظ الإعدادات بنجاح');
+      const settingsRef = doc(db, "settings", "general");
+
+      await setDoc(
+        settingsRef,
+        {
+          ...settings,
+          heroImages: settings.heroImages || [],
+          updatedAt: Timestamp.now(),
+        },
+        { merge: true }
+      );
+
+      // Force reload hero images in carousel
+      window.dispatchEvent(new CustomEvent("heroImagesUpdated"));
+
+      toast.success("تم حفظ الإعدادات بنجاح");
     } catch (error) {
-      console.error('Error saving settings:', error);
-      toast.error('حدث خطأ في حفظ الإعدادات');
+      console.error("Error saving settings:", error);
+      toast.error("حدث خطأ في حفظ الإعدادات");
     } finally {
       setSaving(false);
     }
   };
 
-  const SettingSection = ({ title, icon: Icon, children }: { title: string; icon: any; children: React.ReactNode }) => (
+  const handleHeroImageUpload = async (files: File[]) => {
+    try {
+      if (files.length > 5) {
+        toast.error("يمكنك رفع 5 صور كحد أقصى");
+        return;
+      }
+
+      setUploadingHeroImages(true);
+      toast.loading("جاري رفع الصور إلى imgBB...", { id: "upload-hero" });
+
+      const urls = await uploadMultipleImagesToImgBB(files.slice(0, 5));
+      const currentImages = settings.heroImages || [];
+      const newImages = [...currentImages, ...urls].slice(0, 5);
+
+      // Update local state
+      setSettings({ ...settings, heroImages: newImages });
+
+      // Save to database immediately
+      const settingsRef = doc(db, "settings", "general");
+      await setDoc(
+        settingsRef,
+        {
+          heroImages: newImages,
+          updatedAt: Timestamp.now(),
+        },
+        { merge: true }
+      );
+
+      // Force reload hero images in carousel
+      window.dispatchEvent(new CustomEvent("heroImagesUpdated"));
+
+      toast.success(`تم رفع وحفظ ${urls.length} صورة بنجاح`, {
+        id: "upload-hero",
+      });
+    } catch (error: any) {
+      console.error("Error uploading hero images:", error);
+      toast.error(error.message || "فشل رفع الصور", { id: "upload-hero" });
+    } finally {
+      setUploadingHeroImages(false);
+    }
+  };
+
+  const removeHeroImage = async (index: number) => {
+    try {
+      const newImages = [...(settings.heroImages || [])];
+      newImages.splice(index, 1);
+
+      // Update local state
+      setSettings({ ...settings, heroImages: newImages });
+
+      // Save to database
+      const settingsRef = doc(db, "settings", "general");
+      await setDoc(
+        settingsRef,
+        {
+          heroImages: newImages,
+          updatedAt: Timestamp.now(),
+        },
+        { merge: true }
+      );
+
+      // Force reload hero images in carousel
+      window.dispatchEvent(new CustomEvent("heroImagesUpdated"));
+
+      toast.success("تم حذف الصورة بنجاح");
+    } catch (error) {
+      console.error("Error removing hero image:", error);
+      toast.error("حدث خطأ في حذف الصورة");
+    }
+  };
+
+  const SettingSection = ({
+    title,
+    icon: Icon,
+    children,
+  }: {
+    title: string;
+    icon: any;
+    children: React.ReactNode;
+  }) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -83,26 +180,52 @@ export default function MobileSettings() {
     </motion.div>
   );
 
-  const InputField = ({ label, value, onChange, type = 'text', placeholder, icon: Icon }: {
+  const InputField = ({
+    label,
+    value,
+    onChange,
+    type = "text",
+    placeholder,
+    icon: Icon,
+    onKeyPress,
+  }: {
     label: string;
     value: string;
     onChange: (value: string) => void;
     type?: string;
     placeholder?: string;
     icon?: any;
+    onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   }) => (
     <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {label}
+      </label>
       <div className="relative">
         {Icon && (
-          <Icon className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+          <Icon
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            size={18}
+          />
         )}
         <input
           type={type}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            onChange(e.target.value);
+          }}
+          onKeyDown={(e) => {
+            if (onKeyPress) {
+              onKeyPress(e);
+            } else if (e.key === "Enter") {
+              e.preventDefault();
+            }
+          }}
           placeholder={placeholder}
-          className={`w-full ${Icon ? 'pr-10' : 'pr-3'} pl-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-maroon-500`}
+          autoComplete="off"
+          className={`w-full ${
+            Icon ? "pr-10" : "pr-3"
+          } pl-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-maroon-500 focus:border-brand-maroon-500`}
         />
       </div>
     </div>
@@ -135,13 +258,13 @@ export default function MobileSettings() {
       <SettingSection title="معلومات المتجر" icon={Globe}>
         <InputField
           label="اسم المتجر (عربي)"
-          value={settings.storeNameAr || ''}
+          value={settings.storeNameAr || ""}
           onChange={(value) => setSettings({ ...settings, storeNameAr: value })}
           placeholder="الشيخ للعطور"
         />
         <InputField
           label="اسم المتجر (إنجليزي)"
-          value={settings.storeName || ''}
+          value={settings.storeName || ""}
           onChange={(value) => setSettings({ ...settings, storeName: value })}
           placeholder="ALSHIEKH PARFUMES"
         />
@@ -151,7 +274,7 @@ export default function MobileSettings() {
       <SettingSection title="معلومات الاتصال" icon={Phone}>
         <InputField
           label="البريد الإلكتروني"
-          value={settings.email || ''}
+          value={settings.email || ""}
           onChange={(value) => setSettings({ ...settings, email: value })}
           type="email"
           placeholder="info@alshiekh.com"
@@ -159,7 +282,7 @@ export default function MobileSettings() {
         />
         <InputField
           label="رقم الهاتف"
-          value={settings.phone || ''}
+          value={settings.phone || ""}
           onChange={(value) => setSettings({ ...settings, phone: value })}
           type="tel"
           placeholder="091 508 0707"
@@ -167,59 +290,131 @@ export default function MobileSettings() {
         />
         <InputField
           label="العنوان"
-          value={settings.address || ''}
+          value={settings.address || ""}
           onChange={(value) => setSettings({ ...settings, address: value })}
           placeholder="تاج مول - الطابق الأرضي"
           icon={MapPin}
         />
       </SettingSection>
 
-      {/* Telegram Integration */}
-      <SettingSection title="تكامل Telegram" icon={Bot}>
-        <div className="mb-4 p-3 bg-blue-50 rounded-xl border border-blue-100">
-          <p className="text-xs text-blue-700 mb-2">
-            لإعداد Telegram Bot:
-          </p>
-          <ol className="text-xs text-blue-600 space-y-1 list-decimal list-inside">
-            <li>افتح @BotFather على Telegram</li>
-            <li>أرسل /newbot واتبع التعليمات</li>
-            <li>انسخ الـ Token الذي ستحصل عليه</li>
-            <li>احصل على Chat ID من @userinfobot</li>
-          </ol>
+      {/* Hero Images Management */}
+      <SettingSection title="صور الهيرو (حتى 5 صور)" icon={ImageIcon}>
+        <div className="mb-4">
+          <label className="flex items-center justify-center w-full min-h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-brand-maroon-500 transition-colors bg-gray-50 hover:bg-gray-100">
+            <div className="text-center p-4">
+              {uploadingHeroImages ? (
+                <>
+                  <Loader2
+                    className="mx-auto text-brand-maroon-600 mb-2 animate-spin"
+                    size={24}
+                  />
+                  <p className="text-sm text-gray-600">جاري رفع الصور...</p>
+                </>
+              ) : (
+                <>
+                  <Upload className="mx-auto text-gray-400 mb-2" size={24} />
+                  <p className="text-sm font-medium text-gray-700 mb-1">
+                    اضغط لرفع صور الهيرو
+                  </p>
+                  <p className="text-xs text-gray-500">يمكنك رفع حتى 5 صور</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    سيتم رفع الصور على imgBB
+                  </p>
+                </>
+              )}
+            </div>
+            <input
+              type="file"
+              className="hidden"
+              accept="image/*"
+              multiple
+              disabled={uploadingHeroImages}
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                if (files.length > 0) {
+                  handleHeroImageUpload(files);
+                }
+              }}
+            />
+          </label>
         </div>
-        <InputField
-          label="Telegram Bot Token"
-          value={settings.telegramBotToken || ''}
-          onChange={(value) => setSettings({ ...settings, telegramBotToken: value })}
-          type="password"
-          placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
-          icon={Key}
-        />
-        <InputField
-          label="Telegram Chat ID"
-          value={settings.telegramChatId || ''}
-          onChange={(value) => setSettings({ ...settings, telegramChatId: value })}
-          placeholder="123456789"
-          icon={MessageSquare}
-        />
+
+        {settings.heroImages && settings.heroImages.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                تم رفع{" "}
+                <span className="font-bold text-brand-maroon-600">
+                  {settings.heroImages.length}
+                </span>{" "}
+                صورة
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {settings.heroImages.map((url, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative group"
+                >
+                  <div className="relative aspect-video overflow-hidden rounded-xl border-2 border-gray-200 hover:border-brand-maroon-500 transition-colors">
+                    <img
+                      src={url}
+                      alt={`Hero ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <motion.button
+                        type="button"
+                        onClick={() => removeHeroImage(index)}
+                        className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <Trash2 size={16} />
+                      </motion.button>
+                    </div>
+                    <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full font-bold">
+                      {index + 1}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
       </SettingSection>
 
       {/* Notifications */}
       <SettingSection title="الإشعارات" icon={Bell}>
         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
           <div>
-            <p className="text-sm font-medium text-gray-900">إشعارات البريد الإلكتروني</p>
-            <p className="text-xs text-gray-500">تلقي إشعارات على البريد الإلكتروني</p>
+            <p className="text-sm font-medium text-gray-900">
+              إشعارات البريد الإلكتروني
+            </p>
+            <p className="text-xs text-gray-500">
+              تلقي إشعارات على البريد الإلكتروني
+            </p>
           </div>
           <button
-            onClick={() => setSettings({ ...settings, emailNotifications: !settings.emailNotifications })}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              setSettings({
+                ...settings,
+                emailNotifications: !settings.emailNotifications,
+              });
+            }}
             className={`relative w-12 h-6 rounded-full transition-colors ${
-              settings.emailNotifications ? 'bg-brand-maroon-600' : 'bg-gray-300'
+              settings.emailNotifications
+                ? "bg-brand-maroon-600"
+                : "bg-gray-300"
             }`}
           >
             <span
               className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                settings.emailNotifications ? 'translate-x-6' : 'translate-x-0'
+                settings.emailNotifications ? "translate-x-6" : "translate-x-0"
               }`}
             />
           </button>
@@ -228,8 +423,12 @@ export default function MobileSettings() {
 
       {/* Save Button */}
       <motion.button
+        type="button"
         whileTap={{ scale: 0.95 }}
-        onClick={saveSettings}
+        onClick={(e) => {
+          e.preventDefault();
+          saveSettings();
+        }}
         disabled={saving}
         className="w-full py-4 bg-gradient-to-r from-brand-maroon-600 to-brand-maroon-700 text-white rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
       >
@@ -248,4 +447,3 @@ export default function MobileSettings() {
     </div>
   );
 }
-

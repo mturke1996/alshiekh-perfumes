@@ -37,7 +37,7 @@ export default function LoyaltyProgramComponent({
       icon: Award,
       color: 'from-orange-600 to-orange-800',
       benefits: [
-        'نقطة واحدة لكل 10 IQD',
+        'نقطة واحدة لكل 10 د.ل',
         'خصم 5% على العطور',
         'هدية عيد ميلاد'
       ]
@@ -50,9 +50,9 @@ export default function LoyaltyProgramComponent({
       icon: Trophy,
       color: 'from-gray-400 to-gray-600',
       benefits: [
-        'نقطة واحدة لكل 8 IQD',
+        'نقطة واحدة لكل 8 د.ل',
         'خصم 10% على العطور',
-        'توصيل مجاني للطلبات فوق 50 IQD',
+        'توصيل مجاني للطلبات فوق 50 د.ل',
         'دعوات حصرية للعروض',
         'هدية عيد ميلاد مميزة'
       ]
@@ -65,7 +65,7 @@ export default function LoyaltyProgramComponent({
       icon: Star,
       color: 'from-yellow-500 to-yellow-700',
       benefits: [
-        'نقطة واحدة لكل 5 IQD',
+        'نقطة واحدة لكل 5 د.ل',
         'خصم 15% على جميع المنتجات',
         'توصيل مجاني دائماً',
         'الوصول المبكر للمنتجات الجديدة',
@@ -81,7 +81,7 @@ export default function LoyaltyProgramComponent({
       icon: Crown,
       color: 'from-purple-600 to-pink-600',
       benefits: [
-        'نقطة واحدة لكل 3 IQD',
+        'نقطة واحدة لكل 3 د.ل',
         'خصم 20% على جميع المنتجات',
         'توصيل مجاني وسريع دائماً',
         'عينات مجانية مع كل طلب',
@@ -168,7 +168,7 @@ export default function LoyaltyProgramComponent({
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
               <TrendingUp size={20} className="mb-2" />
               <p className="text-2xl font-bold">{loyalty.lifetimeValue.toFixed(0)}</p>
-              <p className="text-xs text-white/80">قيمة المشتريات (IQD)</p>
+              <p className="text-xs text-white/80">قيمة المشتريات (د.ل)</p>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
               <Calendar size={20} className="mb-2" />
@@ -216,7 +216,7 @@ export default function LoyaltyProgramComponent({
                 
                 <div className="text-center">
                   <p className="text-3xl font-bold text-gray-900 mb-1">
-                    {option.discount} IQD
+                    {option.discount} د.ل
                   </p>
                   <p className="text-sm text-gray-600 mb-4">
                     خصم فوري
@@ -399,7 +399,7 @@ export default function LoyaltyProgramComponent({
               icon: ShoppingBag,
               title: 'تسوق',
               description: 'اكسب نقاط مع كل عملية شراء',
-              points: '1 نقطة لكل 10 IQD'
+              points: '1 نقطة لكل 10 د.ل'
             },
             {
               icon: Star,

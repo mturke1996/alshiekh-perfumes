@@ -129,7 +129,7 @@ export default function MobileCustomers() {
               <span className="text-xs text-gray-500">إجمالي الإنفاق</span>
             </div>
             <p className="text-lg font-bold text-brand-maroon-600">
-              {customer.totalSpent.toFixed(0)} IQD
+              {customer.totalSpent.toFixed(0)} د.ل
             </p>
           </div>
         </div>

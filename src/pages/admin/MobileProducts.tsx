@@ -113,11 +113,11 @@ export default function MobileProducts() {
             <div className="flex items-center justify-between mb-3">
               <div>
                 <p className="text-lg font-bold text-brand-maroon-600">
-                  {product.price.toFixed(0)} IQD
+                  {product.price.toFixed(0)} د.ل
                 </p>
                 {product.discount && (
                   <p className="text-xs text-gray-400 line-through">
-                    {((product.price * 100) / (100 - product.discount)).toFixed(0)} IQD
+                    {((product.price * 100) / (100 - product.discount)).toFixed(0)} د.ل
                   </p>
                 )}
               </div>

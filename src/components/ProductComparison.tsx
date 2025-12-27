@@ -76,7 +76,7 @@ export default function ProductComparison({
         return (
           <div>
             <p className="text-2xl font-bold text-gray-900">
-              {product.price.toFixed(0)} IQD
+              {product.price.toFixed(0)} د.ل
             </p>
             {product.discount && product.discount > 0 && (
               <p className="text-sm text-red-600 font-medium">

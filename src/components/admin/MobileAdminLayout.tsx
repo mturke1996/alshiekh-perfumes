@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from "react";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -10,21 +10,51 @@ import {
   Menu,
   X,
   LogOut,
-  Bell
-} from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../firebase';
-import toast from 'react-hot-toast';
-import BrandLogo from '../BrandLogo';
+  Bell,
+  Image as ImageIcon,
+  Bot,
+  MessageSquare,
+} from "lucide-react";
+import { useAuthStore } from "../../store/authStore";
+import { signOut } from "firebase/auth";
+import { auth } from "../../firebase";
+import toast from "react-hot-toast";
+import BrandLogo from "../BrandLogo";
 
-const tabs = [
-  { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard, path: '/admin' },
-  { id: 'orders', label: 'الطلبات', icon: ShoppingBag, path: '/admin/orders' },
-  { id: 'products', label: 'العطور', icon: Package, path: '/admin/products' },
-  { id: 'customers', label: 'العملاء', icon: Users, path: '/admin/customers' },
-  { id: 'settings', label: 'الإعدادات', icon: Settings, path: '/admin/settings' },
+// جميع التبويبات للـ sidebar
+const allTabs = [
+  {
+    id: "dashboard",
+    label: "لوحة التحكم",
+    icon: LayoutDashboard,
+    path: "/admin",
+  },
+  { id: "orders", label: "الطلبات", icon: ShoppingBag, path: "/admin/orders" },
+  { id: "products", label: "العطور", icon: Package, path: "/admin/products" },
+  { id: "customers", label: "العملاء", icon: Users, path: "/admin/customers" },
+  {
+    id: "messages",
+    label: "الرسائل",
+    icon: MessageSquare,
+    path: "/admin/messages",
+  },
+  { id: "telegram", label: "Telegram", icon: Bot, path: "/admin/telegram" },
+  {
+    id: "settings",
+    label: "الإعدادات",
+    icon: Settings,
+    path: "/admin/settings",
+  },
 ];
+
+// التبويبات التي ستظهر في الشريط السفلي فقط
+const bottomNavTabs = allTabs.filter(
+  (tab) =>
+    tab.id === "dashboard" ||
+    tab.id === "orders" ||
+    tab.id === "products" ||
+    tab.id === "messages"
+);
 
 export default function MobileAdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -32,16 +62,20 @@ export default function MobileAdminLayout() {
   const location = useLocation();
   const { user } = useAuthStore();
 
-  const activeTab = tabs.find(tab => location.pathname === tab.path || 
-    (tab.path === '/admin' && location.pathname === '/admin'))?.id || 'dashboard';
+  const activeTab =
+    allTabs.find(
+      (tab) =>
+        location.pathname === tab.path ||
+        (tab.path === "/admin" && location.pathname === "/admin")
+    )?.id || "dashboard";
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      toast.success('تم تسجيل الخروج بنجاح');
-      navigate('/admin/login');
+      toast.success("تم تسجيل الخروج بنجاح");
+      navigate("/admin/login");
     } catch (error) {
-      toast.error('حدث خطأ أثناء تسجيل الخروج');
+      toast.error("حدث خطأ أثناء تسجيل الخروج");
     }
   };
 
@@ -92,10 +126,10 @@ export default function MobileAdminLayout() {
               className="fixed inset-0 bg-black/50 z-50"
             />
             <motion.aside
-              initial={{ x: '-100%' }}
+              initial={{ x: "-100%" }}
               animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className="fixed left-0 top-0 h-full w-72 bg-white shadow-2xl z-50 overflow-y-auto"
             >
               <div className="p-4 border-b border-gray-200">
@@ -112,11 +146,12 @@ export default function MobileAdminLayout() {
               </div>
 
               <nav className="p-4 space-y-2">
-                {tabs.map((tab) => {
+                {allTabs.map((tab) => {
                   const Icon = tab.icon;
-                  const isActive = location.pathname === tab.path || 
-                    (tab.path === '/admin' && location.pathname === '/admin');
-                  
+                  const isActive =
+                    location.pathname === tab.path ||
+                    (tab.path === "/admin" && location.pathname === "/admin");
+
                   return (
                     <button
                       key={tab.id}
@@ -126,8 +161,8 @@ export default function MobileAdminLayout() {
                       }}
                       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                         isActive
-                          ? 'bg-gradient-to-r from-brand-maroon-500 to-brand-maroon-600 text-white shadow-lg'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? "bg-gradient-to-r from-brand-maroon-500 to-brand-maroon-600 text-white shadow-lg"
+                          : "text-gray-700 hover:bg-gray-100"
                       }`}
                     >
                       <Icon size={22} />
@@ -135,6 +170,22 @@ export default function MobileAdminLayout() {
                     </button>
                   );
                 })}
+
+                {/* Hero Images Management */}
+                <button
+                  onClick={() => {
+                    navigate("/admin/banners");
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                    location.pathname === "/admin/banners"
+                      ? "bg-gradient-to-r from-brand-maroon-500 to-brand-maroon-600 text-white shadow-lg"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <ImageIcon size={22} />
+                  <span className="font-medium">صور الهيرو</span>
+                </button>
               </nav>
 
               <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
@@ -171,42 +222,46 @@ export default function MobileAdminLayout() {
         initial={{ y: 100 }}
         animate={{ y: 0 }}
         className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-200/50 shadow-lg z-40"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="flex items-center justify-around px-2 py-2 max-w-md mx-auto">
-          {tabs.map((tab) => {
+          {bottomNavTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
-            
+
             return (
               <button
                 key={tab.id}
                 onClick={() => navigate(tab.path)}
                 className={`flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all relative ${
-                  isActive
-                    ? 'text-brand-maroon-600'
-                    : 'text-gray-500'
+                  isActive ? "text-brand-maroon-600" : "text-gray-500"
                 }`}
               >
                 {isActive && (
                   <motion.div
                     layoutId="activeTab"
                     className="absolute inset-0 bg-brand-maroon-50 rounded-xl"
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}
                 <Icon
                   size={22}
-                  className={`relative z-10 ${isActive ? 'scale-110' : ''} transition-transform`}
+                  className={`relative z-10 ${
+                    isActive ? "scale-110" : ""
+                  } transition-transform`}
                 />
-                <span className={`text-xs font-medium relative z-10 ${isActive ? 'font-bold' : ''}`}>
+                <span
+                  className={`text-xs font-medium relative z-10 ${
+                    isActive ? "font-bold" : ""
+                  }`}
+                >
                   {tab.label}
                 </span>
                 {isActive && (
                   <motion.div
                     layoutId="activeIndicator"
                     className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-brand-maroon-600 rounded-full"
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}
               </button>
@@ -217,4 +272,3 @@ export default function MobileAdminLayout() {
     </div>
   );
 }
-
