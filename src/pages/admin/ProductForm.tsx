@@ -10,6 +10,7 @@ import {
   Loader2,
   Check,
   Trash2,
+  Sparkles,
 } from "lucide-react";
 import {
   doc,
@@ -25,6 +26,8 @@ import {
   uploadImageToImgBB,
   uploadMultipleImagesToImgBB,
 } from "../../utils/imgbb";
+import { fetchPerfumeData } from "../../utils/perfume-api-real";
+import { doc as firestoreDoc, getDoc as firestoreGetDoc } from "firebase/firestore";
 import toast from "react-hot-toast";
 
 // أشهر شركات العطور العالمية
@@ -68,6 +71,7 @@ export default function ProductForm() {
 
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [fetchingPerfumeData, setFetchingPerfumeData] = useState(false);
   const [product, setProduct] = useState<Partial<Product>>({
     name: "",
     nameAr: "",
@@ -151,6 +155,68 @@ export default function ProductForm() {
 
   const setThumbnail = (url: string) => {
     setProduct((prev) => ({ ...prev, thumbnail: url }));
+  };
+
+  const handleFetchPerfumeData = async () => {
+    if (!product.name || !product.name.trim()) {
+      toast.error("يرجى إدخال اسم العطر أولاً");
+      return;
+    }
+
+    try {
+      setFetchingPerfumeData(true);
+      toast.loading("جاري جلب بيانات العطر من Gemini AI...", { id: "fetch-perfume" });
+
+      // Get API key from Firebase
+      let geminiApiKey: string | null = null;
+      try {
+        const apiKeyDoc = await firestoreGetDoc(firestoreDoc(db, "apiKeys", "gemini"));
+        if (apiKeyDoc.exists()) {
+          geminiApiKey = apiKeyDoc.data().key || null;
+        }
+      } catch (error) {
+        console.error("Error getting API key:", error);
+      }
+
+      if (!geminiApiKey) {
+        toast.error("يرجى إضافة Gemini API Key من الإعدادات أولاً", { id: "fetch-perfume" });
+        return;
+      }
+
+      const perfumeData = await fetchPerfumeData(product.name.trim(), geminiApiKey);
+
+      if (perfumeData) {
+        setProduct((prev) => ({
+          ...prev,
+          name: perfumeData.name || prev.name,
+          nameAr: perfumeData.nameAr || prev.nameAr,
+          brand: perfumeData.brand || prev.brand,
+          brandAr: perfumeData.brandAr || prev.brandAr,
+          description: perfumeData.description || prev.description,
+          descriptionAr: perfumeData.descriptionAr || prev.descriptionAr,
+          gender: perfumeData.gender || prev.gender,
+          genderAr: perfumeData.genderAr || prev.genderAr,
+          concentration: perfumeData.concentration || prev.concentration,
+          concentrationAr: perfumeData.concentrationAr || prev.concentrationAr,
+          topNotes: perfumeData.topNotes || prev.topNotes,
+          topNotesAr: perfumeData.topNotesAr || prev.topNotesAr,
+          middleNotes: perfumeData.middleNotes || prev.middleNotes,
+          middleNotesAr: perfumeData.middleNotesAr || prev.middleNotesAr,
+          baseNotes: perfumeData.baseNotes || prev.baseNotes,
+          baseNotesAr: perfumeData.baseNotesAr || prev.baseNotesAr,
+          fragranceFamily: perfumeData.fragranceFamily || prev.fragranceFamily,
+          fragranceFamilyAr: perfumeData.fragranceFamilyAr || prev.fragranceFamilyAr,
+        }));
+        toast.success("تم جلب بيانات العطر بنجاح!", { id: "fetch-perfume" });
+      } else {
+        toast.error("لم يتم العثور على بيانات للعطر", { id: "fetch-perfume" });
+      }
+    } catch (error: any) {
+      console.error("Error fetching perfume data:", error);
+      toast.error(error.message || "حدث خطأ في جلب بيانات العطر", { id: "fetch-perfume" });
+    } finally {
+      setFetchingPerfumeData(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -285,16 +351,42 @@ export default function ProductForm() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 اسم المنتج (إنجليزي) <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                value={product.name || ""}
-                onChange={(e) =>
-                  setProduct({ ...product, name: e.target.value })
-                }
-                placeholder="Tom Ford Black Orchid"
-                required
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-maroon-500"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={product.name || ""}
+                  onChange={(e) =>
+                    setProduct({ ...product, name: e.target.value })
+                  }
+                  placeholder="Tom Ford Black Orchid"
+                  required
+                  className="flex-1 px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-maroon-500"
+                />
+                <motion.button
+                  type="button"
+                  onClick={handleFetchPerfumeData}
+                  disabled={fetchingPerfumeData || !product.name?.trim()}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-medium text-sm shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                  title="جلب بيانات العطر تلقائياً من Gemini AI"
+                >
+                  {fetchingPerfumeData ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span className="hidden sm:inline">جاري الجلب...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={16} />
+                      <span className="hidden sm:inline">جلب البيانات</span>
+                    </>
+                  )}
+                </motion.button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                💡 أدخل اسم العطر ثم اضغط "جلب البيانات" لملء الحقول تلقائياً
+              </p>
             </div>
 
             <div>
