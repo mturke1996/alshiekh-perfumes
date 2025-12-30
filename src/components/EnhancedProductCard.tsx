@@ -5,7 +5,6 @@ import {
   Heart,
   ShoppingCart,
   Eye,
-  Star,
   Sparkles,
   TrendingUp,
   Badge as BadgeIcon,
@@ -159,27 +158,6 @@ export default function EnhancedProductCard({
                 {product.nameAr}
               </h3>
 
-              {/* Rating */}
-              {product.rating && (
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        size={16}
-                        className={
-                          i < Math.floor(product.rating!)
-                            ? "fill-yellow-400 text-yellow-400"
-                            : "text-gray-300"
-                        }
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm text-gray-600">
-                    ({product.reviewCount || 0})
-                  </span>
-                </div>
-              )}
 
               {/* Description */}
               <p className="text-gray-600 text-sm line-clamp-2 mb-3">
@@ -412,27 +390,6 @@ export default function EnhancedProductCard({
             {product.nameAr}
           </h3>
 
-          {/* Rating */}
-          {product.rating && (
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    size={14}
-                    className={
-                      i < Math.floor(product.rating!)
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-gray-300"
-                    }
-                  />
-                ))}
-              </div>
-              <span className="text-xs text-gray-500">
-                ({product.reviewCount || 0})
-              </span>
-            </div>
-          )}
 
           {/* Details */}
           <div className="flex flex-wrap gap-1.5 mb-3">

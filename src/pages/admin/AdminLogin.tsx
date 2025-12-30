@@ -5,7 +5,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import { useAuthStore } from '../../store/authStore';
-import { Mail, Lock, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Sparkles, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import BrandLogo from '../../components/BrandLogo';
 
@@ -75,6 +75,16 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-brand-maroon-900 via-brand-maroon-800 to-brand-maroon-900 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Back Button */}
+      <motion.button
+        onClick={() => navigate('/')}
+        className="absolute top-4 left-4 p-3 rounded-full bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 transition-colors z-20"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <ArrowLeft size={20} />
+      </motion.button>
+
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute inset-0" style={{

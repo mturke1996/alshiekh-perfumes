@@ -13,7 +13,7 @@ import {
   Youtube,
   Music
 } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { SiteSettings } from '../types/perfume-shop';
 import BrandLogo from './BrandLogo';
@@ -24,21 +24,23 @@ export default function Footer() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
-    try {
-      const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
-      if (settingsDoc.exists()) {
-        setSettings(settingsDoc.data() as SiteSettings);
+    // Use onSnapshot to listen for real-time updates
+    const unsubscribe = onSnapshot(
+      doc(db, 'settings', 'general'),
+      (settingsDoc) => {
+        if (settingsDoc.exists()) {
+          setSettings(settingsDoc.data() as SiteSettings);
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error fetching settings:', error);
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching settings:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   const socialLinks = [
     settings?.facebook && { 
@@ -71,9 +73,9 @@ export default function Footer() {
       label: 'تيك توك',
       color: 'from-gray-900 to-gray-800'
     },
-    { 
+    settings?.phone && { 
       icon: MessageCircle, 
-      href: `https://wa.me/${settings?.phone?.replace(/\s/g, '') || '218915080707'}`, 
+      href: `https://wa.me/${settings.phone.replace(/\s/g, '')}`, 
       label: 'واتساب',
       color: 'from-green-500 to-green-600'
     },
@@ -98,9 +100,11 @@ export default function Footer() {
             {/* Brand Section */}
             <div className="lg:col-span-1">
               <BrandLogo size="lg" showText={true} variant="light" className="mb-4" />
-              <p className="text-gray-400 leading-relaxed mb-6 max-w-xs">
-                أفضل العطور الفاخرة والمستحضرات التجميلية من أشهر العلامات التجارية العالمية
-              </p>
+              {(settings?.storeDescription || settings?.storeDescriptionAr) && (
+                <p className="text-gray-400 leading-relaxed mb-6 max-w-xs">
+                  {settings.storeDescriptionAr || settings.storeDescription}
+                </p>
+              )}
               
               {/* Social Media */}
               <div className="flex gap-3">
@@ -149,34 +153,54 @@ export default function Footer() {
             <div>
               <h4 className="font-bold text-lg mb-6 text-white">تواصل معنا</h4>
               <ul className="space-y-4">
-                <li>
-                  <a
-                    href="tel:+218915080707"
-                    className="flex items-start gap-3 text-gray-400 hover:text-white transition-colors group"
-                  >
-                    <div className="mt-0.5 p-2 rounded-lg bg-brand-maroon-500/20 group-hover:bg-brand-maroon-500/30 transition-colors">
-                      <Phone size={18} className="text-brand-gold-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">الهاتف</p>
-                      <p className="font-medium">{settings?.phone || '091 508 0707'}</p>
-                    </div>
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href={`mailto:${settings?.email || 'info@alshiekhparfumes.com'}`}
-                    className="flex items-start gap-3 text-gray-400 hover:text-white transition-colors group"
-                  >
-                    <div className="mt-0.5 p-2 rounded-lg bg-brand-maroon-500/20 group-hover:bg-brand-maroon-500/30 transition-colors">
-                      <Mail size={18} className="text-brand-gold-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">البريد الإلكتروني</p>
-                      <p className="font-medium text-sm break-all">{settings?.email || 'info@alshiekhparfumes.com'}</p>
-                    </div>
-                  </a>
-                </li>
+                {settings?.phone && (
+                  <li>
+                    <a
+                      href={`tel:${settings.phone.replace(/\s/g, '')}`}
+                      className="flex items-start gap-3 text-gray-400 hover:text-white transition-colors group"
+                    >
+                      <div className="mt-0.5 p-2 rounded-lg bg-brand-maroon-500/20 group-hover:bg-brand-maroon-500/30 transition-colors">
+                        <Phone size={18} className="text-brand-gold-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">الهاتف</p>
+                        <p className="font-medium">
+                          <span 
+                            dir="ltr" 
+                            className="ltr-number"
+                            style={{ 
+                              direction: 'ltr', 
+                              display: 'inline-block',
+                              unicodeBidi: 'bidi-override',
+                              textAlign: 'left',
+                              fontFamily: 'monospace',
+                              writingMode: 'horizontal-tb',
+                              textOrientation: 'mixed'
+                            }}
+                          >
+                            {'\u200E'}{settings.phone}
+                          </span>
+                        </p>
+                      </div>
+                    </a>
+                  </li>
+                )}
+                {settings?.email && (
+                  <li>
+                    <a
+                      href={`mailto:${settings.email}`}
+                      className="flex items-start gap-3 text-gray-400 hover:text-white transition-colors group"
+                    >
+                      <div className="mt-0.5 p-2 rounded-lg bg-brand-maroon-500/20 group-hover:bg-brand-maroon-500/30 transition-colors">
+                        <Mail size={18} className="text-brand-gold-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">البريد الإلكتروني</p>
+                        <p className="font-medium text-sm break-all">{settings.email}</p>
+                      </div>
+                    </a>
+                  </li>
+                )}
                 {settings?.address && (
                   <li>
                     <a

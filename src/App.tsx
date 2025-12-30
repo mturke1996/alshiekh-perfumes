@@ -40,7 +40,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
-  const { setUser, setIsAdmin, setLoading } = useAuthStore();
+  const { setUser, setIsAdmin, setLoading, loading: authLoading } = useAuthStore();
   
   // Enable Telegram notifications for new orders
   useTelegramNotification();
@@ -67,6 +67,18 @@ function App() {
 
     return () => unsubscribe();
   }, [setUser, setIsAdmin, setLoading]);
+
+  // Loading screen to prevent white screen on initial load
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-brand-maroon-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">جاري تحميل التطبيق...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

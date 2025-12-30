@@ -4,6 +4,8 @@
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { doc, getDoc, setDoc, deleteDoc, Timestamp } from "firebase/firestore";
+import { db } from "../firebase";
 
 export interface PerfumeData {
   name: string;
@@ -48,9 +50,8 @@ export async function fetchPerfumeDataWithGemini(
     console.log("🔍 البحث عن:", perfumeName);
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash-latest",
-    });
+    // استخدام gemini-pro (النموذج المستقر والمتاح)
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     const prompt = `أنت خبير عطور. اعطني معلومات تفصيلية عن عطر "${perfumeName}".
 
@@ -111,36 +112,50 @@ export async function fetchPerfumeData(
 }
 
 /**
- * حفظ API Key في localStorage (بسيط وسريع)
+ * حفظ API Key في Firestore
  */
-export function saveApiKey(type: "gemini", apiKey: string): boolean {
+export async function saveApiKey(
+  type: "gemini",
+  apiKey: string
+): Promise<boolean> {
   try {
-    localStorage.setItem("gemini_api_key", apiKey);
+    await setDoc(
+      doc(db, "apiKeys", type),
+      { key: apiKey, updatedAt: Timestamp.now() },
+      { merge: true }
+    );
     return true;
-  } catch {
+  } catch (error) {
+    console.error("Error saving API key:", error);
     return false;
   }
 }
 
 /**
- * قراءة API Key
+ * قراءة API Key من Firestore
  */
-export function getApiKey(type: "gemini"): string | null {
+export async function getApiKey(type: "gemini"): Promise<string | null> {
   try {
-    return localStorage.getItem("gemini_api_key");
-  } catch {
+    const apiKeyDoc = await getDoc(doc(db, "apiKeys", type));
+    if (apiKeyDoc.exists()) {
+      return apiKeyDoc.data().key || null;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error getting API key:", error);
     return null;
   }
 }
 
 /**
- * حذف API Key
+ * حذف API Key من Firestore
  */
-export function clearApiKey(type: "gemini"): boolean {
+export async function clearApiKey(type: "gemini"): Promise<boolean> {
   try {
-    localStorage.removeItem("gemini_api_key");
+    await deleteDoc(doc(db, "apiKeys", type));
     return true;
-  } catch {
+  } catch (error) {
+    console.error("Error clearing API key:", error);
     return false;
   }
 }

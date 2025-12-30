@@ -88,3 +88,13 @@ button,
 a {
   touch-action: manipulation;
 }
+
+/* LTR Numbers - Display numbers from left to right */
+.ltr-number {
+  direction: ltr !important;
+  display: inline-block !important;
+  unicode-bidi: bidi-override !important;
+  text-align: left !important;
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bell,
@@ -261,7 +261,8 @@ export default function MobileSettings() {
     </motion.div>
   );
 
-  const InputField = ({
+  // Memoize InputField to prevent re-renders that close keyboard
+  const InputField = React.memo(({
     label,
     value,
     onChange,
@@ -293,6 +294,7 @@ export default function MobileSettings() {
           type={type}
           value={value}
           onChange={(e) => {
+            e.stopPropagation();
             onChange(e.target.value);
           }}
           onKeyDown={(e) => {
@@ -302,15 +304,20 @@ export default function MobileSettings() {
               e.preventDefault();
             }
           }}
+          onBlur={(e) => {
+            // Prevent default blur behavior that might close keyboard
+            e.stopPropagation();
+          }}
           placeholder={placeholder}
           autoComplete="off"
+          autoFocus={false}
           className={`w-full ${
             Icon ? "pr-10" : "pr-3"
           } pl-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-maroon-500 focus:border-brand-maroon-500`}
         />
       </div>
     </div>
-  );
+  ));
 
   if (loading) {
     return (

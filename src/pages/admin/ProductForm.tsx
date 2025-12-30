@@ -26,8 +26,7 @@ import {
   uploadImageToImgBB,
   uploadMultipleImagesToImgBB,
 } from "../../utils/imgbb";
-import { fetchPerfumeData } from "../../utils/perfume-api-real";
-import { doc as firestoreDoc, getDoc as firestoreGetDoc } from "firebase/firestore";
+import { fetchPerfumeData, getApiKey } from "../../utils/perfume-api-real";
 import toast from "react-hot-toast";
 
 // أشهر شركات العطور العالمية
@@ -167,16 +166,8 @@ export default function ProductForm() {
       setFetchingPerfumeData(true);
       toast.loading("جاري جلب بيانات العطر من Gemini AI...", { id: "fetch-perfume" });
 
-      // Get API key from Firebase
-      let geminiApiKey: string | null = null;
-      try {
-        const apiKeyDoc = await firestoreGetDoc(firestoreDoc(db, "apiKeys", "gemini"));
-        if (apiKeyDoc.exists()) {
-          geminiApiKey = apiKeyDoc.data().key || null;
-        }
-      } catch (error) {
-        console.error("Error getting API key:", error);
-      }
+      // Get API key from Firestore
+      const geminiApiKey = await getApiKey("gemini");
 
       if (!geminiApiKey) {
         toast.error("يرجى إضافة Gemini API Key من الإعدادات أولاً", { id: "fetch-perfume" });

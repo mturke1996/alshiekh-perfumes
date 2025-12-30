@@ -12,7 +12,6 @@ import {
   ArrowRight, 
   Heart, 
   ShoppingCart, 
-  Star, 
   Share2, 
   Minus, 
   Plus,
@@ -171,7 +170,7 @@ export default function ProductDetailPage() {
     : [product.thumbnail];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
+    <div className="min-h-screen bg-gray-50 pb-24">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="flex items-center justify-between p-4">
@@ -305,28 +304,7 @@ export default function ProductDetailPage() {
             {product.nameAr || product.name}
           </h1>
 
-          {/* Rating */}
-          {product.rating && (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    size={20}
-                    className={i < Math.floor(product.rating!) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
-                  />
-                ))}
-              </div>
-              <span className="text-base font-bold text-gray-900">
-                {product.rating.toFixed(1)}
-              </span>
-              {product.reviewCount && (
-                <span className="text-sm text-gray-500">
-                  ({product.reviewCount} تقييم)
-                </span>
-              )}
-            </div>
-          )}
+          {/* Rating - Removed as per user request */}
 
           {/* Price */}
           <div className="flex items-center gap-4 py-3 border-y border-gray-200">
@@ -345,33 +323,6 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          {/* Quick Add to Cart - Mobile Friendly */}
-          {product.inStock && (
-            <div className="flex items-center gap-3 bg-gradient-to-r from-brand-maroon-50 to-brand-maroon-100 p-4 rounded-2xl border border-brand-maroon-200">
-              <div className="flex items-center gap-2 flex-1">
-                <button
-                  onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                  className="w-10 h-10 rounded-full bg-white border-2 border-brand-maroon-300 flex items-center justify-center hover:bg-brand-maroon-50 active:scale-95 transition-all shadow-sm"
-                >
-                  <Minus size={18} className="text-brand-maroon-600" />
-                </button>
-                <span className="text-xl font-bold text-gray-900 w-10 text-center">{quantity}</span>
-                <button
-                  onClick={() => setQuantity(q => q + 1)}
-                  className="w-10 h-10 rounded-full bg-white border-2 border-brand-maroon-300 flex items-center justify-center hover:bg-brand-maroon-50 active:scale-95 transition-all shadow-sm"
-                >
-                  <Plus size={18} className="text-brand-maroon-600" />
-                </button>
-              </div>
-              <button
-                onClick={handleAddToCart}
-                className="flex-1 bg-gradient-to-r from-brand-maroon-600 to-brand-maroon-700 text-white py-3 px-6 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-95 transition-all"
-              >
-                <ShoppingCart size={22} />
-                <span>أضف للسلة</span>
-              </button>
-            </div>
-          )}
 
 
           {/* Description */}
@@ -597,6 +548,51 @@ export default function ProductDetailPage() {
         )}
       </div>
 
+      {/* Bottom Bar - Add to Cart (Material Design 3) */}
+      {product.inStock && (
+        <motion.div
+          initial={{ y: 100 }}
+          animate={{ y: 0 }}
+          transition={{ type: "spring", stiffness: 120, damping: 20 }}
+          className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50"
+        >
+          <div className="flex items-center justify-between gap-4">
+            {/* Quantity Selector */}
+            <div className="flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5">
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                className="p-2 text-gray-700"
+              >
+                <Minus size={18} />
+              </motion.button>
+              <span className="font-medium text-gray-900 w-6 text-center">
+                {quantity}
+              </span>
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setQuantity((q) => q + 1)}
+                className="p-2 text-gray-700"
+              >
+                <Plus size={18} />
+              </motion.button>
+            </div>
+
+            {/* Add to Cart Button */}
+            <motion.button
+              whileTap={{ scale: 0.98 }}
+              onClick={handleAddToCart}
+              className="flex-1 bg-brand-maroon-600 text-white rounded-full py-3 font-bold flex items-center justify-center gap-2 shadow-md hover:bg-brand-maroon-700 transition-colors"
+            >
+              <ShoppingCart size={20} />
+              <span>أضف إلى السلة</span>
+              <span className="text-brand-gold-300 text-sm">
+                {formatCurrency(finalPrice * quantity, 'LYD')}
+              </span>
+            </motion.button>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
