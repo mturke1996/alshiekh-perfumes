@@ -20,6 +20,87 @@ import { SiteSettings } from "../../types/perfume-shop";
 import { uploadMultipleImagesToImgBB } from "../../utils/imgbb";
 import toast from "react-hot-toast";
 
+// Gemini API Key Component
+function GeminiApiKeySection() {
+  const [apiKey, setApiKey] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchApiKey();
+  }, []);
+
+  const fetchApiKey = async () => {
+    try {
+      const apiKeyDoc = await getDoc(doc(db, "apiKeys", "gemini"));
+      if (apiKeyDoc.exists()) {
+        setApiKey(apiKeyDoc.data().key || "");
+      }
+    } catch (error) {
+      console.error("Error fetching API key:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveApiKey = async () => {
+    try {
+      setSaving(true);
+      await setDoc(
+        doc(db, "apiKeys", "gemini"),
+        { key: apiKey, updatedAt: Timestamp.now() },
+        { merge: true }
+      );
+      toast.success("تم حفظ Gemini API Key بنجاح");
+    } catch (error) {
+      console.error("Error saving API key:", error);
+      toast.error("حدث خطأ في حفظ API Key");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-sm text-gray-500">جاري التحميل...</div>;
+  }
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Gemini API Key
+        </label>
+        <input
+          type="password"
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          placeholder="أدخل Gemini API Key"
+          className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-maroon-500"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          احصل على API Key من{" "}
+          <a
+            href="https://makersuite.google.com/app/apikey"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-maroon-600 hover:underline"
+          >
+            Google AI Studio
+          </a>
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={saveApiKey}
+        disabled={saving}
+        className="w-full px-4 py-2 bg-brand-maroon-600 text-white rounded-xl text-sm font-medium disabled:opacity-50"
+      >
+        {saving ? "جاري الحفظ..." : "حفظ API Key"}
+      </button>
+    </div>
+  );
+}
+
 export default function MobileSettings() {
   const [settings, setSettings] = useState<SiteSettings>({
     storeName: "ALSHIEKH PARFUMES",
@@ -384,6 +465,45 @@ export default function MobileSettings() {
             </div>
           </div>
         )}
+      </SettingSection>
+
+      {/* Social Media Links */}
+      <SettingSection title="روابط وسائل التواصل" icon={Globe}>
+        <InputField
+          label="فيسبوك"
+          value={settings.facebook || ""}
+          onChange={(value) => setSettings({ ...settings, facebook: value })}
+          placeholder="https://facebook.com/yourpage"
+        />
+        <InputField
+          label="إنستغرام"
+          value={settings.instagram || ""}
+          onChange={(value) => setSettings({ ...settings, instagram: value })}
+          placeholder="https://instagram.com/yourpage"
+        />
+        <InputField
+          label="تويتر"
+          value={settings.twitter || ""}
+          onChange={(value) => setSettings({ ...settings, twitter: value })}
+          placeholder="https://twitter.com/yourpage"
+        />
+        <InputField
+          label="يوتيوب"
+          value={settings.youtube || ""}
+          onChange={(value) => setSettings({ ...settings, youtube: value })}
+          placeholder="https://youtube.com/yourchannel"
+        />
+        <InputField
+          label="تيك توك"
+          value={settings.tiktok || ""}
+          onChange={(value) => setSettings({ ...settings, tiktok: value })}
+          placeholder="https://tiktok.com/@yourpage"
+        />
+      </SettingSection>
+
+      {/* API Keys */}
+      <SettingSection title="مفاتيح API" icon={Shield}>
+        <GeminiApiKeySection />
       </SettingSection>
 
       {/* Notifications */}

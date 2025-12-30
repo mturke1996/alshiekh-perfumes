@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import { 
   Facebook, 
   Instagram, 
@@ -8,39 +9,75 @@ import {
   Mail, 
   MapPin,
   MessageCircle,
-  ArrowLeft
+  ArrowLeft,
+  Youtube,
+  Music
 } from 'lucide-react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { SiteSettings } from '../types/perfume-shop';
 import BrandLogo from './BrandLogo';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
+      if (settingsDoc.exists()) {
+        setSettings(settingsDoc.data() as SiteSettings);
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const socialLinks = [
-    { 
+    settings?.facebook && { 
       icon: Facebook, 
-      href: 'https://facebook.com', 
+      href: settings.facebook, 
       label: 'فيسبوك',
       color: 'from-blue-600 to-blue-700'
     },
-    { 
+    settings?.instagram && { 
       icon: Instagram, 
-      href: 'https://instagram.com', 
+      href: settings.instagram, 
       label: 'إنستغرام',
       color: 'from-pink-500 via-purple-500 to-orange-500'
     },
-    { 
+    settings?.twitter && { 
       icon: Twitter, 
-      href: 'https://twitter.com', 
+      href: settings.twitter, 
       label: 'تويتر',
       color: 'from-blue-400 to-blue-500'
     },
+    settings?.youtube && { 
+      icon: Youtube, 
+      href: settings.youtube, 
+      label: 'يوتيوب',
+      color: 'from-red-600 to-red-700'
+    },
+    settings?.tiktok && { 
+      icon: Music, 
+      href: settings.tiktok, 
+      label: 'تيك توك',
+      color: 'from-gray-900 to-gray-800'
+    },
     { 
       icon: MessageCircle, 
-      href: 'https://wa.me/218915080707', 
+      href: `https://wa.me/${settings?.phone?.replace(/\s/g, '') || '218915080707'}`, 
       label: 'واتساب',
       color: 'from-green-500 to-green-600'
     },
-  ];
+  ].filter(Boolean) as Array<{ icon: any; href: string; label: string; color: string }>;
 
   const quickLinks = [
     { path: '/', label: 'الرئيسية' },
@@ -122,13 +159,13 @@ export default function Footer() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 mb-1">الهاتف</p>
-                      <p className="font-medium">091 508 0707</p>
+                      <p className="font-medium">{settings?.phone || '091 508 0707'}</p>
                     </div>
                   </a>
                 </li>
                 <li>
                   <a
-                    href="mailto:info@alshiekhparfumes.com"
+                    href={`mailto:${settings?.email || 'info@alshiekhparfumes.com'}`}
                     className="flex items-start gap-3 text-gray-400 hover:text-white transition-colors group"
                   >
                     <div className="mt-0.5 p-2 rounded-lg bg-brand-maroon-500/20 group-hover:bg-brand-maroon-500/30 transition-colors">
@@ -136,29 +173,28 @@ export default function Footer() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 mb-1">البريد الإلكتروني</p>
-                      <p className="font-medium text-sm break-all">info@alshiekhparfumes.com</p>
+                      <p className="font-medium text-sm break-all">{settings?.email || 'info@alshiekhparfumes.com'}</p>
                     </div>
                   </a>
                 </li>
-                <li>
-                  <a
-                    href="https://maps.google.com/?q=تاج+مول+تاجوراء"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-start gap-3 text-gray-400 hover:text-white transition-colors group"
-                  >
-                    <div className="mt-0.5 p-2 rounded-lg bg-brand-maroon-500/20 group-hover:bg-brand-maroon-500/30 transition-colors">
-                      <MapPin size={18} className="text-brand-gold-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">العنوان</p>
-                      <p className="font-medium text-sm leading-snug">
-                        تاج مول - الطابق الأرضي<br />
-                        جزيرة الأندلسي - تاجوراء
-                      </p>
-                    </div>
-                  </a>
-                </li>
+                {settings?.address && (
+                  <li>
+                    <a
+                      href={`https://maps.google.com/?q=${encodeURIComponent(settings.address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-3 text-gray-400 hover:text-white transition-colors group"
+                    >
+                      <div className="mt-0.5 p-2 rounded-lg bg-brand-maroon-500/20 group-hover:bg-brand-maroon-500/30 transition-colors">
+                        <MapPin size={18} className="text-brand-gold-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">العنوان</p>
+                        <p className="font-medium text-sm leading-snug">{settings.address}</p>
+                      </div>
+                    </a>
+                  </li>
+                )}
               </ul>
             </div>
 
