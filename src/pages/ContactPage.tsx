@@ -96,7 +96,6 @@ export default function ContactPage() {
         message: '',
       });
     } catch (error: any) {
-      console.error('Error sending contact message:', error);
       toast.dismiss('sending-message');
       
       let errorMessage = 'حدث خطأ في إرسال الرسالة. يرجى المحاولة مرة أخرى.';
@@ -157,7 +156,18 @@ export default function ContactPage() {
               </div>
               <div className="flex-1 text-right">
                 <p className="text-sm text-gray-600 mb-1">الهاتف</p>
-                <p className="text-2xl font-bold text-gray-900">091 508 0707</p>
+                <p 
+                  dir="ltr" 
+                  className="text-2xl font-bold text-gray-900 font-mono text-left"
+                  style={{
+                    direction: 'ltr',
+                    unicodeBidi: 'bidi-override',
+                    display: 'block',
+                    textAlign: 'left'
+                  }}
+                >
+                  091 508 0707
+                </p>
                 <p className="text-xs text-gray-500 mt-1">اضغط للاتصال</p>
               </div>
             </div>
@@ -259,11 +269,16 @@ export default function ContactPage() {
               </label>
               <input
                 type="tel"
+                dir="ltr"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 required
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-maroon-500"
+                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-maroon-500 text-left font-mono"
                 placeholder="0912345678"
+                style={{
+                  direction: 'ltr',
+                  textAlign: 'left'
+                }}
               />
             </div>
 

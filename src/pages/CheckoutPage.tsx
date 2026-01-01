@@ -51,7 +51,7 @@ export default function CheckoutPage() {
           setSettings(settingsDoc.data() as SiteSettings);
         }
       } catch (error) {
-        console.error('Error loading settings:', error);
+        // Error loading settings
       }
     };
     loadSettings();
@@ -100,19 +100,15 @@ export default function CheckoutPage() {
 
       // Return next sequential number (start from 1 if no orders found)
       const nextNumber = maxNumber + 1;
-      console.log('Generated order number:', nextNumber, '(max found:', maxNumber, ')');
       return nextNumber.toString();
     } catch (error) {
-      console.error('Error generating order number:', error);
       // Fallback: try to get count of orders
       try {
         const ordersRef = collection(db, 'orders');
         const snapshot = await getDocs(ordersRef);
         const count = snapshot.size + 1;
-        console.log('Fallback: Using order count:', count);
         return count.toString();
       } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError);
         // Return 1 as last resort if everything fails
         return '1';
       }
@@ -139,24 +135,14 @@ export default function CheckoutPage() {
     e.preventDefault();
     e.stopPropagation();
 
-    console.log('🔵 Form submitted with data:', {
-      customerName,
-      customerPhone,
-      deliveryType,
-      address: shippingAddress.addressLine1,
-      itemsCount: items.length,
-    });
-
     // Validate required fields
     if (!customerName.trim()) {
       toast.error('يرجى إدخال الاسم');
-      console.error('❌ Validation failed: Name is empty');
       return;
     }
 
     if (!customerPhone.trim()) {
       toast.error('يرجى إدخال رقم الهاتف');
-      console.error('❌ Validation failed: Phone is empty');
       return;
     }
 
@@ -164,25 +150,21 @@ export default function CheckoutPage() {
     const cleanedPhone = customerPhone.trim();
     if (!validateLibyanPhone(cleanedPhone)) {
       toast.error('رقم الهاتف غير صحيح. يجب أن يبدأ بـ 091 أو 092 أو 093 أو 094');
-      console.error('❌ Validation failed: Invalid phone format', cleanedPhone);
       return;
     }
 
     // Only require address if delivery is selected
     if (deliveryType === 'delivery' && !shippingAddress.addressLine1.trim()) {
       toast.error('يرجى إدخال عنوان التوصيل');
-      console.error('❌ Validation failed: Address is empty for delivery');
       return;
     }
 
     // Check if cart has items
     if (!items || items.length === 0) {
       toast.error('السلة فارغة. يرجى إضافة منتجات أولاً');
-      console.error('❌ Validation failed: Cart is empty');
       return;
     }
 
-    console.log('✅ All validations passed, starting order creation...');
     setLoading(true);
 
     try {
@@ -251,56 +233,38 @@ export default function CheckoutPage() {
         }
       });
 
-      console.log('📦 Creating order with data:', {
-        orderNumber,
-        itemsCount: orderData.items.length,
-        total: orderData.total,
-        customerName: orderData.customerName,
-        customerPhone: orderData.customerPhone,
-        deliveryType,
-        address: orderData.shippingAddress.addressLine1,
-      });
-
-      toast.loading('جاري حفظ الطلب في قاعدة البيانات...', { id: 'creating-order' });
+      toast.loading('جاري إتمام طلبك...', { id: 'creating-order' });
       const docRef = await addDoc(collection(db, 'orders'), cleanOrderData);
-      console.log('✅ Order created successfully with ID:', docRef.id, 'Order Number:', orderNumber);
 
       // Send Telegram notification
-      toast.loading('جاري إرسال الإشعار إلى Telegram...', { id: 'creating-order' });
-      let telegramSent = false;
-      try {
-        const orderWithId: Order = {
-          id: docRef.id,
-          ...cleanOrderData,
-        } as Order;
-        
-        console.log('📤 Sending Telegram notification for order:', orderNumber);
-        const telegramResult = await sendTelegramOrderNotification(orderWithId);
-        telegramSent = telegramResult;
-        
-        if (telegramSent) {
-          console.log('✅ Telegram notification sent successfully');
-        } else {
-          console.warn('⚠️ Telegram notification returned false - check bot token and chat IDs');
+      const orderWithId: Order = {
+        id: docRef.id,
+        ...cleanOrderData,
+      } as Order;
+      
+      // Send Telegram notification - don't wait for it to complete
+      // This ensures user experience is not blocked
+      (async () => {
+        try {
+          console.log('📤 بدء إرسال إشعار Telegram...');
+          const result = await sendTelegramOrderNotification(orderWithId);
+          if (result) {
+            console.log('✅ تم إرسال إشعار Telegram بنجاح');
+          } else {
+            console.warn('⚠️ فشل إرسال إشعار Telegram - قد تكون الإعدادات غير صحيحة');
+          }
+        } catch (error) {
+          console.error('❌ خطأ في إرسال إشعار Telegram:', error);
         }
-      } catch (telegramError: any) {
-        console.error('❌ Error sending Telegram notification:', telegramError);
-        console.error('Telegram error details:', {
-          message: telegramError?.message,
-          code: telegramError?.code,
-        });
-        telegramSent = false;
-      }
+      })();
 
       toast.dismiss('creating-order');
       
       // Always show success even if Telegram failed
-      toast.success(`✅ تم إنشاء الطلب بنجاح!\nرقم الطلب: ${orderNumber}`, { duration: 5000 });
-      
-      // Log Telegram status separately
-      if (!telegramSent) {
-        console.warn('⚠️ Telegram notification was not sent - check bot token and active chats');
-      }
+      toast.success('✅ لقد تم اكتمال طلبك، سوف نتواصل معك قريباً', { 
+        duration: 5000,
+        icon: '🎉'
+      });
       
       // Clear cart
       clearCart();
@@ -311,13 +275,6 @@ export default function CheckoutPage() {
       }, 2500);
 
     } catch (error: any) {
-      console.error('Error creating order:', error);
-      console.error('Error details:', {
-        code: error?.code,
-        message: error?.message,
-        stack: error?.stack,
-      });
-      
       // More specific error messages
       let errorMessage = 'حدث خطأ في إنشاء الطلب. يرجى المحاولة مرة أخرى.';
       
@@ -334,11 +291,6 @@ export default function CheckoutPage() {
       }
       
       toast.error(errorMessage, { duration: 5000 });
-      
-      // Log full error for debugging
-      if (error?.code || error?.message) {
-        console.error('Full error object:', JSON.stringify(error, null, 2));
-      }
     } finally {
       setLoading(false);
     }

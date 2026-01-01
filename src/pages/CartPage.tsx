@@ -22,11 +22,15 @@ export default function CartPage() {
   const total = getTotal();
 
   const handleQuantityChange = (productId: string, newQuantity: number) => {
-    if (newQuantity < 1) {
+    if (!productId) return;
+    
+    const validQuantity = Math.max(1, Math.floor(newQuantity));
+    
+    if (validQuantity < 1) {
       removeItem(productId);
       toast.success('تم حذف المنتج من السلة');
     } else {
-      updateQuantity(productId, newQuantity);
+      updateQuantity(productId, validQuantity);
     }
   };
 
@@ -118,11 +122,21 @@ export default function CartPage() {
       <div className="space-y-3 px-4 py-4">
         {/* Cart Items */}
         <AnimatePresence>
-          {items.map((item, index) => {
+          {items
+            .filter((item) => item.product && item.product.id) // Filter out invalid items
+            .map((item, index) => {
             const product = item.product;
-            const finalPrice = product.discount
+            
+            // Validate product data
+            if (!product || !product.id) {
+              return null;
+            }
+            
+            const finalPrice = product.discount && product.discount > 0
               ? product.price - (product.price * product.discount / 100)
-              : product.price;
+              : (product.price || 0);
+            
+            const quantity = Math.max(1, item.quantity || 1);
 
             return (
               <motion.div
@@ -179,16 +193,16 @@ export default function CartPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-1 border border-gray-200">
                           <button
-                            onClick={() => handleQuantityChange(product.id, item.quantity - 1)}
+                            onClick={() => handleQuantityChange(product.id, quantity - 1)}
                             className="w-9 h-9 rounded-lg bg-white flex items-center justify-center hover:bg-brand-maroon-50 hover:text-brand-maroon-600 active:scale-90 transition-all shadow-sm"
                           >
                             <Minus size={16} className="text-gray-700" />
                           </button>
                           <span className="text-sm font-bold text-gray-900 w-10 text-center">
-                            {item.quantity}
+                            {quantity}
                           </span>
                           <button
-                            onClick={() => handleQuantityChange(product.id, item.quantity + 1)}
+                            onClick={() => handleQuantityChange(product.id, quantity + 1)}
                             className="w-9 h-9 rounded-lg bg-white flex items-center justify-center hover:bg-brand-maroon-50 hover:text-brand-maroon-600 active:scale-90 transition-all shadow-sm"
                           >
                             <Plus size={16} className="text-gray-700" />
@@ -211,7 +225,7 @@ export default function CartPage() {
                       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                         <span className="text-sm text-gray-500 font-medium">الإجمالي:</span>
                         <span className="text-lg font-bold text-brand-maroon-600">
-                          {formatCurrency(finalPrice * item.quantity, 'LYD')}
+                          {formatCurrency(finalPrice * quantity, 'LYD')}
                         </span>
                       </div>
                     </div>

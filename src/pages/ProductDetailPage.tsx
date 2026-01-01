@@ -6,7 +6,7 @@ import { db } from '../firebase';
 import { Product } from '../types/perfume-shop';
 import { useCartStore } from '../store/cartStore';
 import { useFavoritesStore } from '../store/favoritesStore';
-import { formatPrice, formatCurrency } from '../utils/helpers';
+import { formatCurrency } from '../utils/helpers';
 import EnhancedProductCard from '../components/EnhancedProductCard';
 import { 
   ArrowRight, 
@@ -15,12 +15,6 @@ import {
   Share2, 
   Minus, 
   Plus,
-  Check,
-  Truck,
-  Shield,
-  RotateCcw,
-  Package,
-  Award,
   ChevronLeft,
   Sparkles,
   Tag,
@@ -28,7 +22,13 @@ import {
   Clock,
   Droplets,
   Wind,
-  Info
+  Package,
+  Award,
+  Shield,
+  Truck,
+  RotateCcw,
+  TrendingUp,
+  CheckCircle2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -64,7 +64,6 @@ export default function ProductDetailPage() {
         navigate('/products');
       }
     } catch (error) {
-      console.error('Error fetching product:', error);
       toast.error('حدث خطأ أثناء تحميل المنتج');
     } finally {
       setLoading(false);
@@ -85,7 +84,7 @@ export default function ProductDetailPage() {
         .slice(0, 3);
       setRelatedProducts(related);
     } catch (error) {
-      console.error('Error fetching related products:', error);
+      // Error fetching related products
     }
   };
 
@@ -130,7 +129,6 @@ export default function ProductDetailPage() {
         // User cancelled or error occurred
       }
     } else {
-      // Fallback: copy to clipboard
       navigator.clipboard.writeText(window.location.href);
       toast.success('تم نسخ رابط المنتج');
     }
@@ -138,10 +136,14 @@ export default function ProductDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-brand-maroon-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">جاري التحميل...</p>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-16 h-16 border-4 border-brand-maroon-600 border-t-transparent rounded-full mx-auto mb-4"
+          />
+          <p className="text-gray-600 font-medium">جاري التحميل...</p>
         </div>
       </div>
     );
@@ -149,91 +151,124 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="text-center">
-          <Package className="mx-auto text-gray-400 mb-4" size={64} />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">المنتج غير موجود</h2>
-          <Link to="/products" className="text-brand-maroon-600 font-medium">
-            العودة للمنتجات
-          </Link>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200 }}
+          >
+            <Package className="mx-auto text-gray-400 mb-4" size={64} />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">المنتج غير موجود</h2>
+            <p className="text-gray-600 mb-6">عذراً، المنتج الذي تبحث عنه غير متوفر</p>
+            <Link 
+              to="/products" 
+              className="inline-flex items-center gap-2 px-6 py-3 bg-brand-maroon-600 text-white rounded-full font-medium hover:bg-brand-maroon-700 transition-colors"
+            >
+              <ArrowRight size={18} />
+              <span>العودة للمنتجات</span>
+            </Link>
+          </motion.div>
         </div>
       </div>
     );
   }
 
-  const finalPrice = product.discount 
+  const finalPrice = (product.discount && product.discount > 0 && product.price > 0)
     ? product.price - (product.price * product.discount / 100)
     : product.price;
+  
+  // Ensure price is valid before displaying
+  const displayPrice = finalPrice && finalPrice > 0 ? finalPrice : null;
 
   const images = product.images && product.images.length > 0 
     ? product.images 
     : [product.thumbnail];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="flex items-center justify-between p-4">
-          <button
+    <div className="min-h-screen bg-white">
+      {/* Elegant Header */}
+      <motion.div 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100"
+      >
+        <div className="flex items-center justify-between px-4 py-3">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
           >
-            <ChevronLeft size={24} />
-          </button>
-          <h1 className="text-lg font-bold text-gray-900">تفاصيل المنتج</h1>
+            <ChevronLeft size={22} className="text-gray-700" />
+          </motion.button>
+          
+          <h1 className="text-base font-semibold text-gray-900">تفاصيل المنتج</h1>
+          
           <div className="flex items-center gap-2">
-            <button
+            <motion.button
+              whileTap={{ scale: 0.9 }}
               onClick={handleShare}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
             >
-              <Share2 size={20} />
-            </button>
-            <button
+              <Share2 size={18} className="text-gray-700" />
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.9 }}
               onClick={handleToggleFavorite}
-              className={`p-2 rounded-full transition-colors ${
-                isFavorite ? 'text-red-500' : 'hover:bg-gray-100'
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                isFavorite 
+                  ? 'bg-red-50 text-red-500' 
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
               }`}
             >
-              <Heart size={20} fill={isFavorite ? 'currentColor' : 'none'} />
-            </button>
+              <Heart size={18} fill={isFavorite ? 'currentColor' : 'none'} />
+            </motion.button>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="space-y-4">
-        {/* Image Gallery */}
-        <div className="bg-white">
-          <div className="relative aspect-square w-full bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Main Content */}
+      <div className="pb-32">
+        {/* Hero Image Section */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="relative bg-gradient-to-br from-gray-50 via-white to-gray-50"
+        >
+          <div className="relative aspect-square w-full max-w-md mx-auto">
             <AnimatePresence mode="wait">
               <motion.img
                 key={selectedImageIndex}
                 src={images[selectedImageIndex]}
                 alt={product.nameAr}
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3 }}
-                className="w-full h-full object-cover"
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.4 }}
+                className="w-full h-full object-contain p-8"
               />
             </AnimatePresence>
 
-            {/* Badges */}
-            <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+            {/* Product Badges */}
+            <div className="absolute top-4 left-4 flex flex-col gap-2">
               {product.featured && (
                 <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="bg-gradient-to-r from-brand-gold-500 to-brand-gold-600 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200 }}
+                  className="bg-gradient-to-r from-amber-400 to-amber-500 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg"
                 >
                   <Sparkles size={12} />
-                  مميز
+                  <span>مميز</span>
                 </motion.div>
               )}
               {product.isNew && (
                 <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.1 }}
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
                   className="bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg"
                 >
                   جديد
@@ -241,355 +276,488 @@ export default function ProductDetailPage() {
               )}
               {product.isBestSeller && (
                 <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.15 }}
-                  className="bg-orange-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200, delay: 0.15 }}
+                  className="bg-orange-500 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg"
                 >
-                  الأكثر مبيعاً
+                  <TrendingUp size={12} />
+                  <span>الأكثر مبيعاً</span>
                 </motion.div>
               )}
-              {product.discount && (
+              {product.discount && product.discount > 0 && (
                 <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.2 }}
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
                   className="bg-red-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg"
                 >
                   خصم {product.discount}%
                 </motion.div>
               )}
             </div>
-          </div>
 
-          {/* Thumbnail Gallery */}
-          {images.length > 1 && (
-            <div className="flex gap-2 p-4 overflow-x-auto scrollbar-hide bg-gray-50">
-              {images.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImageIndex(index)}
-                  className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${
-                    selectedImageIndex === index
-                      ? 'border-brand-maroon-600 ring-2 ring-brand-maroon-200 scale-105'
-                      : 'border-gray-200 opacity-60 hover:opacity-100'
-                  }`}
-                >
-                  <img
-                    src={image}
-                    alt={`${product.nameAr} ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Product Info */}
-        <div className="bg-white px-4 py-6 space-y-6">
-          {/* Brand & Category */}
-          <div className="flex items-center gap-2 text-sm">
-            <span className="px-3 py-1 bg-brand-maroon-100 text-brand-maroon-700 rounded-full font-medium">
-              {product.brandAr || product.brand}
-            </span>
-            <span className="text-gray-400">•</span>
-            <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full">
-              {product.categoryAr || product.category}
-            </span>
-          </div>
-
-          {/* Title */}
-          <h1 className="text-2xl font-bold text-gray-900 leading-tight">
-            {product.nameAr || product.name}
-          </h1>
-
-          {/* Rating - Removed as per user request */}
-
-          {/* Price */}
-          <div className="flex items-center gap-4 py-3 border-y border-gray-200">
-            <span className="text-3xl font-bold text-brand-maroon-600">
-              {formatCurrency(finalPrice, 'LYD')}
-            </span>
-            {product.discount && (
-              <>
-                <span className="text-xl text-gray-400 line-through">
-                  {formatCurrency(product.price, 'LYD')}
-                </span>
-                <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-bold">
-                  وفر {product.discount}%
-                </span>
-              </>
+            {/* Stock Status */}
+            {!product.inStock && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg">
+                غير متوفر
+              </div>
             )}
           </div>
 
-
-
-          {/* Description */}
-          {(product.descriptionAr || product.description) && (
-            <div className="pt-4 border-t border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <Info size={18} className="text-brand-maroon-600" />
-                الوصف
-              </h3>
-              <p className="text-gray-600 leading-relaxed text-base whitespace-pre-line">
-                {product.descriptionAr || product.description}
-              </p>
-            </div>
-          )}
-
-          {/* Tags */}
-          {(product.tags && product.tags.length > 0) && (
-            <div className="pt-4 border-t border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <Tag size={18} className="text-brand-maroon-600" />
-                التصنيفات
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {(product.tagsAr || product.tags || []).map((tag, index) => (
-                  <span
+          {/* Image Thumbnails */}
+          {images.length > 1 && (
+            <div className="px-4 pb-4">
+              <div className="flex gap-3 overflow-x-auto scrollbar-hide py-2">
+                {images.map((image, index) => (
+                  <motion.button
                     key={index}
-                    className="px-3 py-1.5 bg-gradient-to-r from-brand-maroon-50 to-brand-maroon-100 text-brand-maroon-700 rounded-full text-sm font-medium border border-brand-maroon-200"
+                    onClick={() => setSelectedImageIndex(index)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${
+                      selectedImageIndex === index
+                        ? 'border-brand-maroon-600 ring-2 ring-brand-maroon-200'
+                        : 'border-gray-200 opacity-60 hover:opacity-100'
+                    }`}
                   >
-                    {product.tagsAr?.[index] || tag}
-                  </span>
+                    <img
+                      src={image}
+                      alt={`${product.nameAr} ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </motion.button>
                 ))}
               </div>
             </div>
           )}
+        </motion.div>
 
-          {/* Product Details */}
-          <div className="pt-4 border-t border-gray-200 space-y-3">
-            <h3 className="font-bold text-gray-900 mb-4">تفاصيل المنتج</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {product.gender && (
-                <div className="bg-gray-50 p-3 rounded-xl">
-                  <p className="text-xs text-gray-500 mb-1">الجنس</p>
-                  <p className="font-bold text-gray-900">{product.genderAr || product.gender}</p>
-                </div>
-              )}
-              {product.size && (
-                <div className="bg-gray-50 p-3 rounded-xl">
-                  <p className="text-xs text-gray-500 mb-1">الحجم</p>
-                  <p className="font-bold text-gray-900">{product.sizeAr || product.size}</p>
-                </div>
-              )}
-              {product.concentration && (
-                <div className="bg-gray-50 p-3 rounded-xl">
-                  <p className="text-xs text-gray-500 mb-1">التركيز</p>
-                  <p className="font-bold text-gray-900">{product.concentrationAr || product.concentration}</p>
-                </div>
-              )}
-              {product.productType && (
-                <div className="bg-gray-50 p-3 rounded-xl">
-                  <p className="text-xs text-gray-500 mb-1">نوع المنتج</p>
-                  <p className="font-bold text-gray-900">{product.productTypeAr || product.productType}</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Fragrance Family */}
-          {product.fragranceFamily && (
-            <div className="pt-4 border-t border-gray-200">
-              <h3 className="font-bold text-gray-900 mb-3">عائلة العطر</h3>
-              <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium inline-block">
-                {product.fragranceFamilyAr || product.fragranceFamily}
+        {/* Product Information Card */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white rounded-t-3xl -mt-6 relative z-10 shadow-xl"
+        >
+          <div className="px-5 pt-6 pb-8 space-y-6">
+            {/* Brand & Category */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-3 py-1.5 bg-brand-maroon-50 text-brand-maroon-700 rounded-full text-sm font-semibold">
+                {product.brandAr || product.brand}
+              </span>
+              <span className="text-gray-300">•</span>
+              <span className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm">
+                {product.categoryAr || product.category}
               </span>
             </div>
-          )}
 
-          {/* Fragrance Notes */}
-          {(product.topNotes || product.middleNotes || product.baseNotes) && (
-            <div className="pt-4 border-t border-gray-200 space-y-4">
-              <h3 className="font-bold text-gray-900 mb-4">مكونات الرائحة</h3>
-              {product.topNotes && product.topNotes.length > 0 && (
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                    <Droplets size={16} className="text-blue-500" />
-                    الرأسية (Top Notes)
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {product.topNotes.map((note, i) => (
-                      <span
-                        key={i}
-                        className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-200"
-                      >
-                        {product.topNotesAr?.[i] || note}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {product.middleNotes && product.middleNotes.length > 0 && (
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                    <Wind size={16} className="text-brand-gold-600" />
-                    القلبية (Middle Notes)
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {product.middleNotes.map((note, i) => (
-                      <span
-                        key={i}
-                        className="px-3 py-1.5 bg-brand-gold-50 text-brand-gold-700 rounded-full text-sm font-medium border border-brand-gold-200"
-                      >
-                        {product.middleNotesAr?.[i] || note}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {product.baseNotes && product.baseNotes.length > 0 && (
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                    <Package size={16} className="text-gray-600" />
-                    القاعدية (Base Notes)
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {product.baseNotes.map((note, i) => (
-                      <span
-                        key={i}
-                        className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm font-medium border border-gray-200"
-                      >
-                        {product.baseNotesAr?.[i] || note}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+            {/* Product Title */}
+            <motion.h1
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-2xl font-bold text-gray-900 leading-tight"
+            >
+              {product.nameAr || product.name}
+            </motion.h1>
 
-          {/* Season & Occasion */}
-          {((product.season && product.season.length > 0) || (product.occasion && product.occasion.length > 0)) && (
-            <div className="pt-4 border-t border-gray-200 space-y-4">
-              {product.season && product.season.length > 0 && (
-                <div>
-                  <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <Calendar size={18} className="text-brand-maroon-600" />
-                    الموسم المناسب
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {(product.seasonAr || product.season || []).map((season, i) => (
-                      <span
-                        key={i}
-                        className="px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-sm font-medium border border-green-200"
-                      >
-                        {product.seasonAr?.[i] || season}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {product.occasion && product.occasion.length > 0 && (
-                <div>
-                  <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <Sparkles size={18} className="text-brand-maroon-600" />
-                    المناسبة
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {(product.occasionAr || product.occasion || []).map((occasion, i) => (
-                      <span
-                        key={i}
-                        className="px-3 py-1.5 bg-purple-50 text-purple-700 rounded-full text-sm font-medium border border-purple-200"
-                      >
-                        {product.occasionAr?.[i] || occasion}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+            {/* Price Section */}
+            {displayPrice && displayPrice > 0 && product.price > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="flex items-baseline gap-3 pb-4 border-b border-gray-100"
+              >
+                <span className="text-3xl font-bold text-gray-900">
+                  {formatCurrency(displayPrice, 'LYD')}
+                </span>
+                {product.discount && product.discount > 0 && product.price > 0 && (
+                  <>
+                    <span className="text-xl text-gray-400 line-through">
+                      {formatCurrency(product.price, 'LYD')}
+                    </span>
+                    <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-sm font-bold">
+                      خصم {product.discount}%
+                    </span>
+                  </>
+                )}
+              </motion.div>
+            )}
 
-          {/* Longevity & Sillage */}
-          {(product.longevity || product.sillage) && (
-            <div className="pt-4 border-t border-gray-200 space-y-3">
-              <h3 className="font-bold text-gray-900 mb-3">الأداء</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {product.longevity && (
-                  <div className="bg-gray-50 p-3 rounded-xl">
-                    <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
-                      <Clock size={14} />
-                      الثبات
-                    </p>
-                    <p className="font-bold text-gray-900">{product.longevityAr || product.longevity}</p>
+            {/* Description */}
+            {(product.descriptionAr || product.description) && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="pt-2"
+              >
+                <h3 className="text-sm font-semibold text-gray-500 mb-3 uppercase tracking-wide">
+                  الوصف
+                </h3>
+                <p className="text-gray-700 leading-relaxed text-[15px] whitespace-pre-line">
+                  {product.descriptionAr || product.description}
+                </p>
+              </motion.div>
+            )}
+
+            {/* Fragrance Family */}
+            {product.fragranceFamily && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="pt-4 border-t border-gray-100"
+              >
+                <h3 className="text-sm font-semibold text-gray-500 mb-3 uppercase tracking-wide">
+                  عائلة العطر
+                </h3>
+                <span className="inline-block px-4 py-2 bg-purple-50 text-purple-700 rounded-full text-sm font-medium border border-purple-200">
+                  {product.fragranceFamilyAr || product.fragranceFamily}
+                </span>
+              </motion.div>
+            )}
+
+            {/* Fragrance Notes */}
+            {(product.topNotes || product.middleNotes || product.baseNotes) && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.7 }}
+                className="pt-4 border-t border-gray-100 space-y-5"
+              >
+                <h3 className="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wide">
+                  مكونات الرائحة
+                </h3>
+                
+                {product.topNotes && product.topNotes.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                        <Droplets size={16} className="text-blue-600" />
+                      </div>
+                      <p className="font-semibold text-gray-900">الرأسية</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {product.topNotes.map((note, i) => (
+                        <span
+                          key={i}
+                          className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium border border-blue-200"
+                        >
+                          {product.topNotesAr?.[i] || note}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
-                {product.sillage && (
-                  <div className="bg-gray-50 p-3 rounded-xl">
-                    <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
-                      <Wind size={14} />
-                      الانتشار
-                    </p>
-                    <p className="font-bold text-gray-900">{product.sillageAr || product.sillage}</p>
+
+                {product.middleNotes && product.middleNotes.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+                        <Wind size={16} className="text-amber-600" />
+                      </div>
+                      <p className="font-semibold text-gray-900">القلبية</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {product.middleNotes.map((note, i) => (
+                        <span
+                          key={i}
+                          className="px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg text-sm font-medium border border-amber-200"
+                        >
+                          {product.middleNotesAr?.[i] || note}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
+
+                {product.baseNotes && product.baseNotes.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                        <Package size={16} className="text-gray-700" />
+                      </div>
+                      <p className="font-semibold text-gray-900">القاعدية</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {product.baseNotes.map((note, i) => (
+                        <span
+                          key={i}
+                          className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium border border-gray-200"
+                        >
+                          {product.baseNotesAr?.[i] || note}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Product Details Grid */}
+            {(product.gender || product.size || product.concentration || product.productType) && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8 }}
+                className="pt-4 border-t border-gray-100"
+              >
+                <h3 className="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wide">
+                  تفاصيل المنتج
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {product.gender && (
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <p className="text-xs text-gray-500 mb-1.5 font-medium">الجنس</p>
+                      <p className="font-bold text-gray-900">{product.genderAr || product.gender}</p>
+                    </div>
+                  )}
+                  {product.size && (
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <p className="text-xs text-gray-500 mb-1.5 font-medium">الحجم</p>
+                      <p className="font-bold text-gray-900">{product.sizeAr || product.size}</p>
+                    </div>
+                  )}
+                  {product.concentration && (
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <p className="text-xs text-gray-500 mb-1.5 font-medium">التركيز</p>
+                      <p className="font-bold text-gray-900">{product.concentrationAr || product.concentration}</p>
+                    </div>
+                  )}
+                  {product.productType && (
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <p className="text-xs text-gray-500 mb-1.5 font-medium">نوع المنتج</p>
+                      <p className="font-bold text-gray-900">{product.productTypeAr || product.productType}</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Season & Occasion */}
+            {((product.season && product.season.length > 0) || (product.occasion && product.occasion.length > 0)) && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.9 }}
+                className="pt-4 border-t border-gray-100 space-y-4"
+              >
+                {product.season && product.season.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Calendar size={18} className="text-green-600" />
+                      <h3 className="font-semibold text-gray-900">الموسم المناسب</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(product.seasonAr || product.season || []).map((season, i) => (
+                        <span
+                          key={i}
+                          className="px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-sm font-medium border border-green-200"
+                        >
+                          {product.seasonAr?.[i] || season}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {product.occasion && product.occasion.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Sparkles size={18} className="text-purple-600" />
+                      <h3 className="font-semibold text-gray-900">المناسبة</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(product.occasionAr || product.occasion || []).map((occasion, i) => (
+                        <span
+                          key={i}
+                          className="px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg text-sm font-medium border border-purple-200"
+                        >
+                          {product.occasionAr?.[i] || occasion}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Longevity & Sillage */}
+            {(product.longevity || product.sillage) && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1 }}
+                className="pt-4 border-t border-gray-100"
+              >
+                <h3 className="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wide">
+                  الأداء
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {product.longevity && (
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-100">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock size={16} className="text-gray-600" />
+                        <p className="text-xs font-semibold text-gray-700 uppercase">الثبات</p>
+                      </div>
+                      <p className="font-bold text-gray-900">{product.longevityAr || product.longevity}</p>
+                    </div>
+                  )}
+                  {product.sillage && (
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-100">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Wind size={16} className="text-gray-600" />
+                        <p className="text-xs font-semibold text-gray-700 uppercase">الانتشار</p>
+                      </div>
+                      <p className="font-bold text-gray-900">{product.sillageAr || product.sillage}</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Tags */}
+            {(product.tags && product.tags.length > 0) && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.1 }}
+                className="pt-4 border-t border-gray-100"
+              >
+                <h3 className="text-sm font-semibold text-gray-500 mb-3 uppercase tracking-wide">
+                  التصنيفات
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {(product.tagsAr || product.tags || []).map((tag, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1.5 bg-gradient-to-r from-brand-maroon-50 to-brand-maroon-100 text-brand-maroon-700 rounded-lg text-sm font-medium border border-brand-maroon-200"
+                    >
+                      {product.tagsAr?.[index] || tag}
+                    </span>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Trust Signals */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.2 }}
+              className="pt-6 border-t border-gray-100"
+            >
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center p-4 bg-gray-50 rounded-xl">
+                  <Shield className="mx-auto mb-2 text-brand-maroon-600" size={24} />
+                  <p className="text-xs text-gray-600 font-medium">ضمان الجودة</p>
+                </div>
+                <div className="text-center p-4 bg-gray-50 rounded-xl">
+                  <Truck className="mx-auto mb-2 text-brand-maroon-600" size={24} />
+                  <p className="text-xs text-gray-600 font-medium">شحن سريع</p>
+                </div>
+                <div className="text-center p-4 bg-gray-50 rounded-xl">
+                  <RotateCcw className="mx-auto mb-2 text-brand-maroon-600" size={24} />
+                  <p className="text-xs text-gray-600 font-medium">إرجاع سهل</p>
+                </div>
               </div>
-            </div>
-          )}
+            </motion.div>
 
-        </div>
-
-        {/* Related Products */}
-        {relatedProducts.length > 0 && (
-          <div className="px-4 py-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">منتجات مشابهة</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {relatedProducts.map((relatedProduct) => (
-                <EnhancedProductCard
-                  key={relatedProduct.id}
-                  product={relatedProduct}
-                  view="grid"
-                />
-              ))}
-            </div>
+            {/* Related Products */}
+            {relatedProducts.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.3 }}
+                className="pt-6 border-t border-gray-100"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-gray-900">منتجات مشابهة</h3>
+                  <Link 
+                    to="/products" 
+                    className="text-brand-maroon-600 text-sm font-medium flex items-center gap-1"
+                  >
+                    <span>عرض الكل</span>
+                    <ArrowRight size={16} />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {relatedProducts.map((relatedProduct, index) => (
+                    <motion.div
+                      key={relatedProduct.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 1.4 + index * 0.1 }}
+                    >
+                      <EnhancedProductCard
+                        product={relatedProduct}
+                        view="grid"
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </div>
-        )}
+        </motion.div>
       </div>
 
-      {/* Bottom Bar - Add to Cart (Material Design 3) */}
-      {product.inStock && (
+      {/* Elegant Bottom Action Bar */}
+      {product.inStock && displayPrice && displayPrice > 0 && (
         <motion.div
-          initial={{ y: 100 }}
-          animate={{ y: 0 }}
-          transition={{ type: "spring", stiffness: 120, damping: 20 }}
-          className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50"
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 150, damping: 25 }}
+          className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-gray-200 shadow-2xl z-50"
+          style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
         >
-          <div className="flex items-center justify-between gap-4">
-            {/* Quantity Selector */}
-            <div className="flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5">
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="p-2 text-gray-700"
-              >
-                <Minus size={18} />
-              </motion.button>
-              <span className="font-medium text-gray-900 w-6 text-center">
-                {quantity}
-              </span>
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setQuantity((q) => q + 1)}
-                className="p-2 text-gray-700"
-              >
-                <Plus size={18} />
-              </motion.button>
-            </div>
+          <div className="px-5 pt-4 pb-2">
+            <div className="flex items-center gap-3 max-w-md mx-auto">
+              {/* Quantity Selector */}
+              <div className="flex items-center gap-1 bg-gray-100 rounded-full p-1">
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  disabled={quantity <= 1}
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-gray-700 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Minus size={16} />
+                </motion.button>
+                <span className="font-bold text-gray-900 w-8 text-center text-sm">
+                  {quantity}
+                </span>
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setQuantity((q) => q + 1)}
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-gray-700 hover:bg-white transition-colors"
+                >
+                  <Plus size={16} />
+                </motion.button>
+              </div>
 
-            {/* Add to Cart Button */}
-            <motion.button
-              whileTap={{ scale: 0.98 }}
-              onClick={handleAddToCart}
-              className="flex-1 bg-brand-maroon-600 text-white rounded-full py-3 font-bold flex items-center justify-center gap-2 shadow-md hover:bg-brand-maroon-700 transition-colors"
-            >
-              <ShoppingCart size={20} />
-              <span>أضف إلى السلة</span>
-              <span className="text-brand-gold-300 text-sm">
-                {formatCurrency(finalPrice * quantity, 'LYD')}
-              </span>
-            </motion.button>
+              {/* Add to Cart Button */}
+              {displayPrice && displayPrice > 0 && (
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleAddToCart}
+                  className="flex-1 bg-gradient-to-r from-brand-maroon-600 to-brand-maroon-700 text-white rounded-full py-4 font-bold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all"
+                >
+                  <ShoppingCart size={20} />
+                  <span>أضف إلى السلة</span>
+                  <span className="text-sm opacity-90">
+                    {formatCurrency(displayPrice * quantity, 'LYD')}
+                  </span>
+                </motion.button>
+              )}
+            </div>
+            
+            {/* Trust Badge */}
+            <div className="flex items-center justify-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
+              <CheckCircle2 size={14} className="text-green-600" />
+              <p className="text-xs text-gray-600">ضمان أصالة المنتج</p>
+            </div>
           </div>
         </motion.div>
       )}

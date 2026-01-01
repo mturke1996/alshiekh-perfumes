@@ -205,18 +205,10 @@ export default function AdminLogin() {
           </form>
 
           {/* Footer Note */}
-          <div className="mt-6 pt-6 border-t border-gray-200 space-y-2">
+          <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-center text-xs text-gray-500">
               هذا القسم مخصص للمديرين فقط
             </p>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-              <p className="text-xs text-blue-700 font-medium mb-1">⚠️ لا تستطيع تسجيل الدخول؟</p>
-              <p className="text-xs text-blue-600">
-                1. تأكد من تفعيل Authentication في Firebase Console<br/>
-                2. تأكد من وجود حساب في collection "admins"<br/>
-                3. راجع ملف SETUP_LOGIN_GUIDE.md للتفاصيل
-              </p>
-            </div>
           </div>
         </motion.div>
 

@@ -5,15 +5,16 @@ import {
   Facebook, 
   Instagram, 
   Twitter, 
-  Phone, 
   Mail, 
   MapPin,
-  MessageCircle,
   ArrowLeft,
   Youtube,
-  Music
+  Music,
+  Shield,
+  Lock,
+  FileText
 } from 'lucide-react';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { SiteSettings } from '../types/perfume-shop';
 import BrandLogo from './BrandLogo';
@@ -22,9 +23,9 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState('');
 
   useEffect(() => {
-    // Use onSnapshot to listen for real-time updates
     const unsubscribe = onSnapshot(
       doc(db, 'settings', 'general'),
       (settingsDoc) => {
@@ -42,42 +43,45 @@ export default function Footer() {
     return () => unsubscribe();
   }, []);
 
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email) {
+      // Handle newsletter subscription
+      console.log('Newsletter subscription:', email);
+      setEmail('');
+    }
+  };
+
   const socialLinks = [
     settings?.facebook && { 
       icon: Facebook, 
       href: settings.facebook, 
       label: 'فيسبوك',
-      color: 'from-blue-600 to-blue-700'
+      color: 'hover:bg-blue-600'
     },
     settings?.instagram && { 
       icon: Instagram, 
       href: settings.instagram, 
       label: 'إنستغرام',
-      color: 'from-pink-500 via-purple-500 to-orange-500'
+      color: 'hover:bg-gradient-to-br hover:from-purple-600 hover:via-pink-600 hover:to-orange-500'
     },
     settings?.twitter && { 
       icon: Twitter, 
       href: settings.twitter, 
       label: 'تويتر',
-      color: 'from-blue-400 to-blue-500'
+      color: 'hover:bg-blue-400'
     },
     settings?.youtube && { 
       icon: Youtube, 
       href: settings.youtube, 
       label: 'يوتيوب',
-      color: 'from-red-600 to-red-700'
+      color: 'hover:bg-red-600'
     },
     settings?.tiktok && { 
       icon: Music, 
       href: settings.tiktok, 
       label: 'تيك توك',
-      color: 'from-gray-900 to-gray-800'
-    },
-    settings?.phone && { 
-      icon: MessageCircle, 
-      href: `https://wa.me/${settings.phone.replace(/\s/g, '')}`, 
-      label: 'واتساب',
-      color: 'from-green-500 to-green-600'
+      color: 'hover:bg-gray-900'
     },
   ].filter(Boolean) as Array<{ icon: any; href: string; label: string; color: string }>;
 
@@ -89,174 +93,173 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-gradient-to-b from-gray-900 via-gray-900 to-black text-white relative overflow-hidden">
-      {/* Decorative Elements */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-brand-gold-500/5 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-brand-maroon-500/5 rounded-full blur-3xl"></div>
-      
-      <div className="container mx-auto px-4 lg:px-6 relative z-10">
-        <div className="py-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-            {/* Brand Section */}
-            <div className="lg:col-span-1">
-              <BrandLogo size="lg" showText={true} variant="light" className="mb-4" />
-              {(settings?.storeDescription || settings?.storeDescriptionAr) && (
-                <p className="text-gray-400 leading-relaxed mb-6 max-w-xs">
-                  {settings.storeDescriptionAr || settings.storeDescription}
-                </p>
-              )}
-              
-              {/* Social Media */}
-              <div className="flex gap-3">
-                {socialLinks.map((social, index) => {
-                  const Icon = social.icon;
-                  return (
-                    <motion.a
-                      key={index}
-                      href={social.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      whileHover={{ scale: 1.1, y: -3 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`w-11 h-11 rounded-xl bg-gradient-to-br ${social.color} flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300`}
-                      aria-label={social.label}
-                    >
-                      <Icon size={20} className="text-white" />
-                    </motion.a>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Quick Links */}
-            <div>
-              <h4 className="font-bold text-lg mb-6 text-white">روابط سريعة</h4>
-              <ul className="space-y-3">
-                {quickLinks.map((link) => (
-                  <li key={link.path}>
-                    <Link
-                      to={link.path}
-                      className="group flex items-center gap-2 text-gray-400 hover:text-white transition-colors duration-200"
-                    >
-                      <ArrowLeft 
-                        size={16} 
-                        className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" 
-                      />
-                      <span>{link.label}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Contact Info */}
-            <div>
-              <h4 className="font-bold text-lg mb-6 text-white">تواصل معنا</h4>
-              <ul className="space-y-4">
-                {settings?.phone && (
-                  <li>
-                    <a
-                      href={`tel:${settings.phone.replace(/\s/g, '')}`}
-                      className="flex items-start gap-3 text-gray-400 hover:text-white transition-colors group"
-                    >
-                      <div className="mt-0.5 p-2 rounded-lg bg-brand-maroon-500/20 group-hover:bg-brand-maroon-500/30 transition-colors">
-                        <Phone size={18} className="text-brand-gold-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 mb-1">الهاتف</p>
-                        <p className="font-medium">
-                          <span 
-                            dir="ltr" 
-                            className="ltr-number"
-                            style={{ 
-                              direction: 'ltr', 
-                              display: 'inline-block',
-                              unicodeBidi: 'bidi-override',
-                              textAlign: 'left',
-                              fontFamily: 'monospace',
-                              writingMode: 'horizontal-tb',
-                              textOrientation: 'mixed'
-                            }}
-                          >
-                            {'\u200E'}{settings.phone}
-                          </span>
-                        </p>
-                      </div>
-                    </a>
-                  </li>
-                )}
-                {settings?.email && (
-                  <li>
-                    <a
-                      href={`mailto:${settings.email}`}
-                      className="flex items-start gap-3 text-gray-400 hover:text-white transition-colors group"
-                    >
-                      <div className="mt-0.5 p-2 rounded-lg bg-brand-maroon-500/20 group-hover:bg-brand-maroon-500/30 transition-colors">
-                        <Mail size={18} className="text-brand-gold-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 mb-1">البريد الإلكتروني</p>
-                        <p className="font-medium text-sm break-all">{settings.email}</p>
-                      </div>
-                    </a>
-                  </li>
-                )}
-                {settings?.address && (
-                  <li>
-                    <a
-                      href={`https://maps.google.com/?q=${encodeURIComponent(settings.address)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-start gap-3 text-gray-400 hover:text-white transition-colors group"
-                    >
-                      <div className="mt-0.5 p-2 rounded-lg bg-brand-maroon-500/20 group-hover:bg-brand-maroon-500/30 transition-colors">
-                        <MapPin size={18} className="text-brand-gold-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 mb-1">العنوان</p>
-                        <p className="font-medium text-sm leading-snug">{settings.address}</p>
-                      </div>
-                    </a>
-                  </li>
-                )}
-              </ul>
-            </div>
-
-            {/* Newsletter/CTA */}
-            <div>
-              <h4 className="font-bold text-lg mb-6 text-white">اشترك في النشرة</h4>
-              <p className="text-gray-400 text-sm mb-4">
-                احصل على آخر العروض والمنتجات الجديدة
+    <footer className="hidden lg:block bg-white border-t border-gray-200">
+      {/* Main Footer Content */}
+      <div className="container mx-auto px-6 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+          {/* Brand Section - Material Design 3 Style */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="lg:col-span-1 space-y-4"
+          >
+            <BrandLogo size="lg" showText={true} variant="full" className="mb-4" />
+            {(settings?.storeDescription || settings?.storeDescriptionAr) && (
+              <p className="text-gray-600 leading-relaxed text-sm">
+                {settings.storeDescriptionAr || settings.storeDescription}
               </p>
-              <form className="space-y-3">
+            )}
+            
+            {/* Social Media - Material Design 3 Surface Tint */}
+            <div className="flex flex-wrap gap-3 pt-2">
+              {socialLinks.map((social, index) => {
+                const Icon = social.icon;
+                return (
+                  <motion.a
+                    key={index}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`w-10 h-10 rounded-full bg-gray-100 ${social.color} flex items-center justify-center text-gray-600 transition-all duration-300 hover:text-white hover:shadow-lg`}
+                    aria-label={social.label}
+                  >
+                    <Icon size={18} />
+                  </motion.a>
+                );
+              })}
+            </div>
+          </motion.div>
+
+          {/* Quick Links - Material Design 3 Navigation */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="space-y-4"
+          >
+            <h4 className="font-semibold text-gray-900 text-base mb-6">روابط سريعة</h4>
+            <nav className="space-y-2">
+              {quickLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className="group flex items-center gap-2 text-gray-600 hover:text-brand-maroon-600 transition-colors duration-200 py-1.5"
+                >
+                  <ArrowLeft 
+                    size={14} 
+                    className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 text-brand-maroon-600" 
+                  />
+                  <span className="text-sm font-medium">{link.label}</span>
+                </Link>
+              ))}
+            </nav>
+          </motion.div>
+
+          {/* Contact Info - Material Design 3 Cards */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="space-y-4"
+          >
+            <h4 className="font-semibold text-gray-900 text-base mb-6">تواصل معنا</h4>
+            <div className="space-y-4">
+              {settings?.email && (
+                <a
+                  href={`mailto:${settings.email}`}
+                  className="group flex items-start gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all duration-200"
+                >
+                  <div className="mt-0.5 p-2 rounded-lg bg-brand-maroon-50 text-brand-maroon-600 group-hover:bg-brand-maroon-100 transition-colors">
+                    <Mail size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-500 mb-1 font-medium">البريد الإلكتروني</p>
+                    <p className="text-sm font-semibold text-gray-900 break-all">{settings.email}</p>
+                  </div>
+                </a>
+              )}
+              {settings?.address && (
+                <a
+                  href={`https://maps.google.com/?q=${encodeURIComponent(settings.address)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-start gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-all duration-200"
+                >
+                  <div className="mt-0.5 p-2 rounded-lg bg-brand-maroon-50 text-brand-maroon-600 group-hover:bg-brand-maroon-100 transition-colors">
+                    <MapPin size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-500 mb-1 font-medium">العنوان</p>
+                    <p className="text-sm font-semibold text-gray-900 leading-snug">{settings.address}</p>
+                  </div>
+                </a>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Newsletter - Material Design 3 Input & Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="space-y-4"
+          >
+            <h4 className="font-semibold text-gray-900 text-base mb-6">اشترك في النشرة</h4>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              احصل على آخر العروض والمنتجات الجديدة مباشرة في بريدك
+            </p>
+            <form onSubmit={handleNewsletterSubmit} className="space-y-3">
+              <div className="relative">
                 <input
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="بريدك الإلكتروني"
-                  className="w-full px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:border-brand-gold-500 focus:ring-2 focus:ring-brand-gold-500/20 transition-all"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-maroon-600 focus:border-transparent transition-all duration-200"
+                  required
                 />
-                <button
-                  type="submit"
-                  className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-brand-maroon-600 to-brand-maroon-700 hover:from-brand-maroon-700 hover:to-brand-maroon-800 text-white font-bold transition-all duration-200 shadow-lg hover:shadow-xl active:scale-95"
-                >
-                  اشترك الآن
-                </button>
-              </form>
-            </div>
-          </div>
+              </div>
+              <motion.button
+                type="submit"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full px-4 py-3 rounded-xl bg-brand-maroon-600 hover:bg-brand-maroon-700 text-white font-semibold transition-colors duration-200 shadow-sm hover:shadow-md"
+              >
+                اشترك الآن
+              </motion.button>
+            </form>
+          </motion.div>
         </div>
+      </div>
 
-        {/* Bottom Bar */}
-        <div className="border-t border-gray-800 pt-8 pb-6">
+      {/* Bottom Bar - Material Design 3 Divider */}
+      <div className="border-t border-gray-200 bg-gray-50">
+        <div className="container mx-auto px-6 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-gray-500 text-sm text-center md:text-right">
+            <p className="text-gray-600 text-sm text-center md:text-right">
               &copy; {currentYear} الشيخ للعطور (ALSHIEKH PARFUMES). جميع الحقوق محفوظة.
             </p>
-            <div className="flex items-center gap-6 text-sm text-gray-500">
-              <Link to="/" className="hover:text-white transition-colors">
-                سياسة الخصوصية
+            <div className="flex items-center gap-6 text-sm">
+              <Link 
+                to="/" 
+                className="flex items-center gap-1.5 text-gray-600 hover:text-brand-maroon-600 transition-colors"
+              >
+                <Shield size={14} />
+                <span>سياسة الخصوصية</span>
               </Link>
-              <Link to="/" className="hover:text-white transition-colors">
-                شروط الاستخدام
+              <Link 
+                to="/" 
+                className="flex items-center gap-1.5 text-gray-600 hover:text-brand-maroon-600 transition-colors"
+              >
+                <FileText size={14} />
+                <span>شروط الاستخدام</span>
               </Link>
             </div>
           </div>
@@ -265,4 +268,3 @@ export default function Footer() {
     </footer>
   );
 }
-

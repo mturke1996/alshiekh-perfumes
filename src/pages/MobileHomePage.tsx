@@ -4,13 +4,11 @@ import {
   ArrowLeft,
   Zap,
   Package,
-  Phone,
   MapPin,
   Mail,
   Facebook,
   Instagram,
-  Twitter,
-  MessageCircle
+  Twitter
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
@@ -165,21 +163,6 @@ export default function MobileHomePage() {
           {/* Contact Info */}
           <div className="space-y-3 mb-6">
             <motion.a
-              href="tel:+218915080707"
-              whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-3 bg-gradient-to-r from-brand-maroon-50 to-brand-maroon-100 rounded-2xl p-4 border border-brand-maroon-200 active:bg-brand-maroon-200 transition-all"
-            >
-              <div className="w-12 h-12 rounded-xl bg-brand-maroon-600 flex items-center justify-center shadow-md flex-shrink-0">
-                <Phone className="text-white" size={20} />
-              </div>
-              <div className="flex-1 text-right">
-                <p className="text-xs text-gray-500 mb-0.5">الهاتف</p>
-                <p className="font-bold text-gray-900">091 508 0707</p>
-              </div>
-              <ArrowLeft className="text-brand-maroon-600" size={18} />
-            </motion.a>
-
-            <motion.a
               href="https://maps.google.com/?q=تاج+مول+تاجوراء"
               target="_blank"
               rel="noopener noreferrer"
@@ -247,17 +230,6 @@ export default function MobileHomePage() {
                 className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
               >
                 <Twitter className="text-white" size={24} />
-              </motion.a>
-
-              <motion.a
-                href="https://wa.me/218915080707"
-                target="_blank"
-                rel="noopener noreferrer"
-                whileHover={{ scale: 1.1, y: -5 }}
-                whileTap={{ scale: 0.9 }}
-                className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg hover:shadow-xl transition-all"
-              >
-                <MessageCircle className="text-white" size={24} />
               </motion.a>
             </div>
           </div>

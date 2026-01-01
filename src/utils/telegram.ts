@@ -7,86 +7,259 @@ import { Order, SiteSettings, TelegramChat } from '../types/perfume-shop';
  */
 export async function sendTelegramOrderNotification(order: Order, statusUpdate?: { oldStatus: string; newStatus: string }): Promise<boolean> {
   try {
+    console.log('🔍 جاري التحقق من إعدادات Telegram...');
+    
     // Get Telegram settings from Firestore
     const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
     if (!settingsDoc.exists()) {
-      console.warn('Telegram settings not found');
+      console.error('❌ Telegram: مستند الإعدادات غير موجود في Firestore');
       return false;
     }
 
     const settings = settingsDoc.data() as SiteSettings;
     const botToken = settings.telegramBotToken;
 
-    if (!botToken) {
-      console.warn('Telegram bot token not configured');
+    if (!botToken || botToken.trim() === '') {
+      console.error('❌ Telegram: Bot Token غير موجود أو فارغ. يرجى إضافته في الإعدادات');
       return false;
     }
 
+    console.log('✅ تم العثور على Bot Token');
+
     // Get active telegram chats
-    const chatsSnapshot = await getDocs(
-      query(collection(db, 'telegramChats'), where('active', '==', true))
-    );
+    let activeChats: TelegramChat[] = [];
+    try {
+      const chatsSnapshot = await getDocs(
+        query(collection(db, 'telegramChats'), where('active', '==', true))
+      );
 
-    const activeChats = chatsSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as TelegramChat[];
-
-    if (activeChats.length === 0) {
-      // Fallback to old chatId if exists
-      const chatId = settings.telegramChatId;
-      if (chatId) {
-        const message = formatOrderMessage(order, statusUpdate);
-        return sendToChat(botToken, chatId, message);
-      }
-      console.warn('No active Telegram chats found');
-      return false;
+      activeChats = chatsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as TelegramChat[];
+    } catch (chatsError) {
+      // If error getting chats, continue with fallback
+      activeChats = [];
     }
 
     // Format order message
     const message = formatOrderMessage(order, statusUpdate);
-
-    // Send to all active chats
-    const sendPromises = activeChats.map(chat =>
-      sendToChat(botToken, chat.chatId, message)
-    );
-
-    const results = await Promise.allSettled(sendPromises);
-    const successCount = results.filter(r => r.status === 'fulfilled' && r.value).length;
     
-    return successCount > 0;
+    // Validate message is not empty
+    if (!message || message.trim() === '') {
+      console.error('❌ Telegram: الرسالة فارغة');
+      return false;
+    }
+
+    console.log(`📝 تم إنشاء الرسالة (${message.length} حرف)`);
+
+    // If we have active chats, send to all of them
+    if (activeChats.length > 0) {
+      console.log(`📬 إرسال إلى ${activeChats.length} محادثة نشطة...`);
+      const sendPromises = activeChats.map((chat, index) => {
+        const chatId = chat.chatId;
+        if (chatId) {
+          // Handle both string and number chat IDs
+          if (typeof chatId === 'string' && chatId.trim() !== '') {
+            console.log(`📤 إرسال إلى Chat ID: ${chatId.substring(0, 5)}...`);
+            return sendToChat(botToken, chatId, message);
+          } else if (typeof chatId === 'number') {
+            console.log(`📤 إرسال إلى Chat ID (رقم): ${chatId}`);
+            return sendToChat(botToken, chatId, message);
+          }
+        }
+        return Promise.resolve(false);
+      });
+
+      const results = await Promise.allSettled(sendPromises);
+      const successCount = results.filter(r => r.status === 'fulfilled' && r.value).length;
+      
+      if (successCount > 0) {
+        console.log(`✅ تم الإرسال بنجاح إلى ${successCount} محادثة`);
+        return true;
+      } else {
+        console.warn('⚠️ فشل الإرسال إلى جميع المحادثات النشطة');
+      }
+    }
+
+    // Fallback to old chatId if exists and no active chats succeeded
+    const chatId = settings.telegramChatId;
+    if (chatId) {
+      console.log('🔄 استخدام Chat ID الاحتياطي...');
+      // Handle both string and number chat IDs
+      if (typeof chatId === 'string' && chatId.trim() !== '') {
+        console.log(`📤 إرسال إلى Chat ID احتياطي: ${chatId.substring(0, 5)}...`);
+        const result = await sendToChat(botToken, chatId, message);
+        if (result) {
+          console.log('✅ تم الإرسال بنجاح إلى Chat ID الاحتياطي');
+        } else {
+          console.error('❌ فشل الإرسال إلى Chat ID الاحتياطي');
+        }
+        return result;
+      } else if (typeof chatId === 'number') {
+        console.log(`📤 إرسال إلى Chat ID احتياطي (رقم): ${chatId}`);
+        const result = await sendToChat(botToken, chatId, message);
+        if (result) {
+          console.log('✅ تم الإرسال بنجاح إلى Chat ID الاحتياطي');
+        } else {
+          console.error('❌ فشل الإرسال إلى Chat ID الاحتياطي');
+        }
+        return result;
+      }
+    }
+
+    console.error('❌ Telegram: لا توجد محادثات نشطة أو Chat ID في الإعدادات');
+    console.error('💡 يرجى إضافة telegramChatId في Firebase → settings → general');
+    return false;
   } catch (error) {
-    console.error('Error sending Telegram notification:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Telegram: Error in sendTelegramOrderNotification:', error);
+    }
     return false;
   }
 }
 
-async function sendToChat(botToken: string, chatId: string, message: string): Promise<boolean> {
-  try {
-    const response = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendMessage`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: message,
-          parse_mode: 'HTML',
-        }),
-      }
-    );
+async function sendToChat(botToken: string, chatId: string | number, message: string, retryCount = 0): Promise<boolean> {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 1000; // 1 second
 
-    if (!response.ok) {
-      const error = await response.json();
-      console.error('Telegram API error:', error);
+  try {
+    // Validate inputs
+    if (!botToken || typeof botToken !== 'string' || botToken.trim() === '') {
+      console.error('❌ Telegram: Bot Token غير صحيح');
       return false;
     }
 
-    return true;
-  } catch (error) {
-    console.error('Error sending to chat:', error);
+    // Chat ID can be a string or number
+    if (!chatId || (typeof chatId === 'string' && chatId.trim() === '')) {
+      console.error('❌ Telegram: Chat ID غير صحيح');
+      return false;
+    }
+
+    // Clean bot token
+    const cleanBotToken = botToken.trim();
+    
+    // Convert chat ID to string if it's a number, otherwise trim it
+    const cleanChatId = typeof chatId === 'number' ? chatId.toString() : chatId.trim();
+
+    // Ensure message is not empty
+    if (!message || typeof message !== 'string' || message.trim() === '') {
+      console.error('❌ Telegram: الرسالة فارغة');
+      return false;
+    }
+
+    const cleanMessage = message.trim();
+
+    if (retryCount > 0) {
+      console.log(`🔄 إعادة المحاولة ${retryCount}/${MAX_RETRIES}...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * retryCount));
+    } else {
+      console.log('🌐 جاري الاتصال بـ Telegram API...');
+    }
+
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+
+    try {
+      const response = await fetch(
+        `https://api.telegram.org/bot${cleanBotToken}/sendMessage`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chat_id: cleanChatId,
+            text: cleanMessage,
+            parse_mode: 'HTML',
+            disable_web_page_preview: true,
+          }),
+          signal: controller.signal,
+        }
+      );
+
+      clearTimeout(timeoutId);
+
+      // Get response data
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        // Log error details
+        if (data) {
+          console.error('❌ Telegram API Error:', {
+            error_code: data.error_code,
+            description: data.description,
+            chat_id: cleanChatId.substring(0, 5) + '...',
+          });
+          
+          // Retry on certain errors
+          if (retryCount < MAX_RETRIES && (
+            data.error_code === 429 || // Too many requests
+            data.error_code === 500 || // Server error
+            data.error_code === 502 || // Bad gateway
+            data.error_code === 503    // Service unavailable
+          )) {
+            console.log(`⏳ خطأ مؤقت، إعادة المحاولة...`);
+            return await sendToChat(botToken, chatId, message, retryCount + 1);
+          }
+          
+          // Common error messages in Arabic
+          if (data.error_code === 401) {
+            console.error('💡 المشكلة: Bot Token غير صحيح أو غير مفعل');
+            console.error('💡 الحل: تحقق من Bot Token في Firebase → settings → general');
+          } else if (data.error_code === 400) {
+            console.error('💡 المشكلة: Chat ID غير صحيح. تأكد من إرسال رسالة للبوت أولاً');
+            console.error('💡 الحل: أرسل /start للبوت أولاً، ثم احصل على Chat ID');
+          } else if (data.error_code === 403) {
+            console.error('💡 المشكلة: البوت محظور من إرسال رسائل لهذا Chat ID');
+            console.error('💡 الحل: ألغِ حظر البوت أو استخدم Chat ID آخر');
+          }
+        } else {
+          console.error('❌ Telegram: خطأ في الاتصال بالخادم');
+          // Retry on network errors
+          if (retryCount < MAX_RETRIES) {
+            return await sendToChat(botToken, chatId, message, retryCount + 1);
+          }
+        }
+        return false;
+      }
+
+      // Verify response is successful
+      if (data && data.ok === true && data.result) {
+        console.log('✅ تم إرسال الرسالة بنجاح إلى Telegram');
+        return true;
+      }
+
+      console.error('❌ Telegram: استجابة غير متوقعة من API');
+      return false;
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      
+      if (fetchError.name === 'AbortError') {
+        console.error('❌ Telegram: انتهت مهلة الاتصال (Timeout)');
+        if (retryCount < MAX_RETRIES) {
+          return await sendToChat(botToken, chatId, message, retryCount + 1);
+        }
+      } else {
+        throw fetchError;
+      }
+      return false;
+    }
+  } catch (error: any) {
+    console.error('❌ Telegram: خطأ في الاتصال:', error.message);
+    
+    // Retry on network errors
+    if (retryCount < MAX_RETRIES && (
+      error.message.includes('Failed to fetch') ||
+      error.message.includes('NetworkError') ||
+      error.message.includes('timeout')
+    )) {
+      console.log(`⏳ خطأ في الشبكة، إعادة المحاولة...`);
+      return await sendToChat(botToken, chatId, message, retryCount + 1);
+    }
+    
+    console.error('💡 تأكد من الاتصال بالإنترنت');
     return false;
   }
 }
@@ -100,12 +273,17 @@ function formatOrderMessage(order: Order, statusUpdate?: { oldStatus: string; ne
     return formatStatusUpdateMessage(order, statusUpdate.oldStatus, statusUpdate.newStatus);
   }
 
+  // Validate order data
+  if (!order.items || order.items.length === 0) {
+    return '⚠️ طلب بدون منتجات';
+  }
+
   const itemsList = order.items
     .map(
       (item, index) =>
-        `${index + 1}. <b>${item.productNameAr || item.productName}</b>\n   📦 الكمية: ${item.quantity} قطعة\n   💰 السعر: ${item.price.toFixed(0)} د.ل`
+        `${index + 1}. <b>${item.productNameAr || item.productName || 'منتج'}</b>\n   📦 ${item.quantity || 1} × ${(item.price || 0).toFixed(0)} د.ل = ${((item.quantity || 1) * (item.price || 0)).toFixed(0)} د.ل`
     )
-    .join('\n\n');
+    .join('\n');
 
   const statusLabels: Record<string, string> = {
     pending: '🆕 جديد',
@@ -129,69 +307,80 @@ function formatOrderMessage(order: Order, statusUpdate?: { oldStatus: string; ne
   const deliveryTypeEmoji = isPickup ? '🏪' : '🚚';
   const deliveryTypeText = isPickup ? '📦 الاستلام من المتجر' : '🚚 التوصيل إلى العنوان';
 
-  return `
-🎉 <b>طلب جديد - ${deliveryTypeText}</b>
-━━━━━━━━━━━━━━━━━━
+  // Handle createdAt - it might be a Timestamp object or a Date
+  let orderDate: Date;
+  if (order.createdAt) {
+    if (typeof order.createdAt === 'object' && 'toDate' in order.createdAt) {
+      // Firestore Timestamp
+      orderDate = (order.createdAt as any).toDate();
+    } else if (order.createdAt instanceof Date) {
+      // Already a Date object
+      orderDate = order.createdAt;
+    } else if (typeof order.createdAt === 'number') {
+      // Timestamp in milliseconds
+      orderDate = new Date(order.createdAt);
+    } else {
+      // Fallback to current date
+      orderDate = new Date();
+    }
+  } else {
+    orderDate = new Date();
+  }
 
-📦 <b>رقم الطلب:</b> <code>#${order.orderNumber}</code>
-📅 <b>التاريخ والوقت:</b> ${new Date(order.createdAt?.toDate() || new Date()).toLocaleString('ar-LY', {
+  const formattedDate = orderDate.toLocaleString('ar-LY', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  })}
+  });
 
-━━━━━━━━━━━━━━━━━━
-👤 <b>معلومات العميل:</b>
-━━━━━━━━━━━━━━━━━━
-   👤 <b>الاسم:</b> ${order.customerName}
-   📞 <b>الهاتف:</b> <code>${order.customerPhone}</code>
-   ${order.customerEmail ? `   📧 <b>البريد:</b> ${order.customerEmail}` : ''}
+  return `🎉 <b>طلب جديد</b> ${deliveryTypeEmoji}
 
-${isPickup ? `
-━━━━━━━━━━━━━━━━━━
-${deliveryTypeEmoji} <b>طريقة الاستلام:</b>
-━━━━━━━━━━━━━━━━━━
-   🏪 <b>استلام من المتجر</b>
-   📍 ${order.shippingAddress.city || 'العنوان من الإعدادات'}
-` : `
-━━━━━━━━━━━━━━━━━━
-${deliveryTypeEmoji} <b>عنوان التوصيل:</b>
-━━━━━━━━━━━━━━━━━━
-   👤 <b>المستلم:</b> ${order.shippingAddress.fullName}
-   📍 <b>العنوان:</b> ${order.shippingAddress.addressLine1}
-   🏙️ <b>المدينة:</b> ${order.shippingAddress.city}
-   ${order.shippingAddress.phone ? `   📞 <b>هاتف المستلم:</b> <code>${order.shippingAddress.phone}</code>` : ''}
-   ${order.shippingAddress.addressLine2 ? `   📝 <b>ملاحظات:</b> ${order.shippingAddress.addressLine2}` : ''}
-`}
+📦 <b>رقم الطلب:</b> <code>#${order.orderNumber}</code>
+📅 <b>التاريخ:</b> ${formattedDate}
 
-━━━━━━━━━━━━━━━━━━
-🛒 <b>المنتجات (${order.items.length}):</b>
-━━━━━━━━━━━━━━━━━━
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+👤 <b>معلومات العميل</b>
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+• الاسم: <b>${order.customerName}</b>
+• الهاتف: <code>${order.customerPhone}</code>
+${order.customerEmail ? `• البريد: ${order.customerEmail}` : ''}
+
+${isPickup ? `┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+🏪 <b>الاستلام من المتجر</b>
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+📍 ${order.shippingAddress.city || 'العنوان من الإعدادات'}` : `┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+🚚 <b>عنوان التوصيل</b>
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+• المستلم: <b>${order.shippingAddress.fullName}</b>
+• العنوان: ${order.shippingAddress.addressLine1}
+${order.shippingAddress.city ? `• المدينة: ${order.shippingAddress.city}` : ''}
+${order.shippingAddress.phone ? `• هاتف المستلم: <code>${order.shippingAddress.phone}</code>` : ''}
+${order.shippingAddress.addressLine2 ? `• ملاحظات: ${order.shippingAddress.addressLine2}` : ''}`}
+
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+🛒 <b>المنتجات (${order.items.length})</b>
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 ${itemsList}
 
-━━━━━━━━━━━━━━━━━━
-💰 <b>الإجماليات:</b>
-━━━━━━━━━━━━━━━━━━
-   المجموع الفرعي: ${order.subtotal.toFixed(0)} د.ل
-   ${order.discount > 0 ? `   🎁 الخصم: <b>-${order.discount.toFixed(0)} د.ل</b>\n` : ''}
-   ${order.shippingCost > 0 ? `   🚚 تكلفة الشحن: ${order.shippingCost.toFixed(0)} د.ل\n` : ''}
-   ${order.tax > 0 ? `   📊 الضريبة: ${order.tax.toFixed(0)} د.ل\n` : ''}
-   
-   ━━━━━━━━━━━━━━━━━━
-   <b>💵 الإجمالي النهائي: ${order.total.toFixed(0)} د.ل</b>
-   ━━━━━━━━━━━━━━━━━━
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+💰 <b>الإجماليات</b>
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+• المجموع الفرعي: ${order.subtotal.toFixed(0)} د.ل
+${order.discount > 0 ? `• الخصم: <b>-${order.discount.toFixed(0)} د.ل</b>` : ''}
+${order.shippingCost > 0 ? `• الشحن: ${order.shippingCost.toFixed(0)} د.ل` : ''}
+${order.tax > 0 ? `• الضريبة: ${order.tax.toFixed(0)} د.ل` : ''}
 
-━━━━━━━━━━━━━━━━━━
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+💵 <b>الإجمالي النهائي: ${order.total.toFixed(0)} د.ل</b>
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+
 💳 <b>طريقة الدفع:</b> ${paymentLabels[order.paymentMethod] || order.paymentMethod}
 📊 <b>الحالة:</b> ${statusLabels[order.status] || order.status}
+${order.customerNote ? `\n\n📝 <b>ملاحظة العميل:</b>\n${order.customerNote}` : ''}
 
-${order.customerNote ? `\n━━━━━━━━━━━━━━━━━━\n📝 <b>ملاحظة العميل:</b>\n${order.customerNote}\n━━━━━━━━━━━━━━━━━━\n` : ''}
-
-${isPickup ? '✅ <b>سيتم الاستلام من المتجر</b>' : '✅ <b>سيتم التوصيل إلى العنوان المحدد</b>'}
-━━━━━━━━━━━━━━━━━━
-  `.trim();
+${isPickup ? '✅ سيتم الاستلام من المتجر' : '✅ سيتم التوصيل إلى العنوان المحدد'}`;
 }
 
 /**
@@ -225,69 +414,95 @@ function formatStatusUpdateMessage(order: Order, oldStatus: string, newStatus: s
   const isPositiveUpdate = ['confirmed', 'processing', 'shipped', 'delivered'].includes(newStatus);
   const isNegativeUpdate = ['cancelled', 'refunded'].includes(newStatus);
 
-  return `
-${statusEmoji} <b>تحديث حالة الطلب</b>
-━━━━━━━━━━━━━━━━━━
+  return `${statusEmoji} <b>تحديث حالة الطلب</b>
 
 📦 <b>رقم الطلب:</b> <code>#${order.orderNumber}</code>
 👤 <b>العميل:</b> ${order.customerName}
 📞 <b>الهاتف:</b> <code>${order.customerPhone}</code>
 
-━━━━━━━━━━━━━━━━━━
-📊 <b>تغيير الحالة:</b>
-━━━━━━━━━━━━━━━━━━
-   من: ${oldStatusLabel}
-   إلى: <b>${newStatusLabel}</b>
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+📊 <b>تغيير الحالة</b>
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+• من: ${oldStatusLabel}
+• إلى: <b>${newStatusLabel}</b>
 
-━━━━━━━━━━━━━━━━━━
-💰 <b>إجمالي الطلب:</b> ${order.total.toFixed(0)} د.ل
-
-━━━━━━━━━━━━━━━━━━
-${isPositiveUpdate ? '✅ <b>تم التحديث بنجاح</b>' : isNegativeUpdate ? '⚠️ <b>تم تحديث الحالة</b>' : '📊 <b>تم التحديث</b>'}
-━━━━━━━━━━━━━━━━━━
-  `.trim();
+💰 <b>الإجمالي:</b> ${order.total.toFixed(0)} د.ل
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+${isPositiveUpdate ? '✅ تم التحديث بنجاح' : isNegativeUpdate ? '⚠️ تم تحديث الحالة' : '📊 تم التحديث'}`;
 }
 
 /**
  * Test Telegram connection
  */
-export async function testTelegramConnection(botToken: string, chatId: string): Promise<boolean> {
+export async function testTelegramConnection(botToken: string, chatId: string): Promise<{ success: boolean; message: string }> {
   try {
+    console.log('🧪 بدء اختبار اتصال Telegram...');
+    
+    if (!botToken || botToken.trim() === '') {
+      return { success: false, message: 'Bot Token فارغ' };
+    }
+
+    if (!chatId || chatId.trim() === '') {
+      return { success: false, message: 'Chat ID فارغ' };
+    }
+
     // First, test bot token by getting bot info
+    console.log('🔍 التحقق من Bot Token...');
     const botInfoResponse = await fetch(
-      `https://api.telegram.org/bot${botToken}/getMe`
+      `https://api.telegram.org/bot${botToken.trim()}/getMe`
     );
 
     if (!botInfoResponse.ok) {
-      return false;
+      const errorData = await botInfoResponse.json().catch(() => ({}));
+      if (errorData.error_code === 401) {
+        return { success: false, message: 'Bot Token غير صحيح أو غير مفعل' };
+      }
+      return { success: false, message: 'فشل التحقق من Bot Token' };
     }
 
+    const botInfo = await botInfoResponse.json();
+    console.log('✅ Bot Token صحيح:', botInfo.result?.username || 'غير معروف');
+
     // Then test sending message
+    console.log('📤 إرسال رسالة اختبار...');
     const response = await fetch(
-      `https://api.telegram.org/bot${botToken}/sendMessage`,
+      `https://api.telegram.org/bot${botToken.trim()}/sendMessage`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          chat_id: chatId,
+          chat_id: chatId.trim(),
           text: '✅ تم الاتصال بنجاح! إشعارات Telegram تعمل بشكل صحيح.\n\nهذه رسالة اختبار من متجر الشيخ للعطور.',
           parse_mode: 'HTML',
         }),
       }
     );
 
+    const data = await response.json().catch(() => null);
+
     if (!response.ok) {
-      const error = await response.json();
-      console.error('Telegram test error:', error);
-      return false;
+      if (data) {
+        if (data.error_code === 400) {
+          return { success: false, message: 'Chat ID غير صحيح. تأكد من إرسال رسالة للبوت أولاً' };
+        } else if (data.error_code === 403) {
+          return { success: false, message: 'البوت محظور من إرسال رسائل لهذا Chat ID' };
+        }
+        return { success: false, message: data.description || 'فشل إرسال الرسالة' };
+      }
+      return { success: false, message: 'فشل إرسال الرسالة' };
     }
 
-    return true;
-  } catch (error) {
-    console.error('Error testing Telegram connection:', error);
-    return false;
+    if (data && data.ok === true) {
+      console.log('✅ تم إرسال رسالة الاختبار بنجاح');
+      return { success: true, message: 'تم الاتصال بنجاح! الرسالة وصلت إلى Telegram' };
+    }
+
+    return { success: false, message: 'استجابة غير متوقعة من API' };
+  } catch (error: any) {
+    console.error('❌ خطأ في اختبار الاتصال:', error);
+    return { success: false, message: `خطأ في الاتصال: ${error.message}` };
   }
 }
 
@@ -305,7 +520,6 @@ export async function sendContactMessageToTelegram(
     // Get Telegram settings from Firestore
     const settingsDoc = await getDoc(doc(db, 'settings', 'general'));
     if (!settingsDoc.exists()) {
-      console.warn('Telegram settings not found');
       return false;
     }
 
@@ -313,7 +527,6 @@ export async function sendContactMessageToTelegram(
     const botToken = settings.telegramBotToken;
 
     if (!botToken) {
-      console.warn('Telegram bot token not configured');
       return false;
     }
 
@@ -327,31 +540,45 @@ export async function sendContactMessageToTelegram(
       ...doc.data(),
     })) as TelegramChat[];
 
-    if (activeChats.length === 0) {
-      // Fallback to old chatId if exists
-      const chatId = settings.telegramChatId;
-      if (chatId) {
-        const formattedMessage = formatContactMessage(name, phone, email, subject, message);
-        return sendToChat(botToken, chatId, formattedMessage);
-      }
-      console.warn('No active Telegram chats found');
-      return false;
-    }
-
     // Format contact message
     const formattedMessage = formatContactMessage(name, phone, email, subject, message);
 
-    // Send to all active chats
-    const sendPromises = activeChats.map(chat =>
-      sendToChat(botToken, chat.chatId, formattedMessage)
-    );
+    // If we have active chats, send to all of them
+    if (activeChats.length > 0) {
+      const sendPromises = activeChats.map(chat => {
+        const chatId = chat.chatId;
+        if (chatId) {
+          // Handle both string and number chat IDs
+          if (typeof chatId === 'string' && chatId.trim() !== '') {
+            return sendToChat(botToken, chatId, formattedMessage);
+          } else if (typeof chatId === 'number') {
+            return sendToChat(botToken, chatId, formattedMessage);
+          }
+        }
+        return Promise.resolve(false);
+      });
 
-    const results = await Promise.allSettled(sendPromises);
-    const successCount = results.filter(r => r.status === 'fulfilled' && r.value).length;
-    
-    return successCount > 0;
+      const results = await Promise.allSettled(sendPromises);
+      const successCount = results.filter(r => r.status === 'fulfilled' && r.value).length;
+      
+      if (successCount > 0) {
+        return true;
+      }
+    }
+
+    // Fallback to old chatId if exists and no active chats succeeded
+    const chatId = settings.telegramChatId;
+    if (chatId) {
+      // Handle both string and number chat IDs
+      if (typeof chatId === 'string' && chatId.trim() !== '') {
+        return await sendToChat(botToken, chatId, formattedMessage);
+      } else if (typeof chatId === 'number') {
+        return await sendToChat(botToken, chatId, formattedMessage);
+      }
+    }
+
+    return false;
   } catch (error) {
-    console.error('Error sending contact message to Telegram:', error);
     return false;
   }
 }
@@ -366,33 +593,33 @@ function formatContactMessage(
   subject: string,
   message: string
 ): string {
-  return `
-📧 <b>رسالة تواصل جديدة</b>
-━━━━━━━━━━━━━━━━━━
+  const formattedDate = new Date().toLocaleString('ar-LY', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
-👤 <b>الاسم:</b> ${name}
-📞 <b>الهاتف:</b> <code>${phone}</code>
-${email ? `📧 <b>البريد الإلكتروني:</b> ${email}` : ''}
+  return `📧 <b>رسالة تواصل جديدة</b>
 
-━━━━━━━━━━━━━━━━━━
-📌 <b>الموضوع:</b>
-━━━━━━━━━━━━━━━━━━
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+👤 <b>معلومات المرسل</b>
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+• الاسم: <b>${name}</b>
+• الهاتف: <code>${phone}</code>
+${email ? `• البريد: ${email}` : ''}
+
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+📌 <b>الموضوع</b>
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 ${subject}
 
-━━━━━━━━━━━━━━━━━━
-💬 <b>الرسالة:</b>
-━━━━━━━━━━━━━━━━━━
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+💬 <b>الرسالة</b>
+┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 ${message}
 
-━━━━━━━━━━━━━━━━━━
-⏰ <b>التاريخ والوقت:</b> ${new Date().toLocaleString('ar-LY', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-})}
-━━━━━━━━━━━━━━━━━━
-  `.trim();
+⏰ <b>التاريخ:</b> ${formattedDate}`;
 }
 
