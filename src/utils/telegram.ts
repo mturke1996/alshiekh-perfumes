@@ -273,9 +273,31 @@ function formatOrderMessage(order: Order, statusUpdate?: { oldStatus: string; ne
     return formatStatusUpdateMessage(order, statusUpdate.oldStatus, statusUpdate.newStatus);
   }
 
+  console.log('📝 بدء إنشاء رسالة الطلب...');
+  console.log('📦 بيانات الطلب:', {
+    orderNumber: order.orderNumber,
+    itemsCount: order.items?.length || 0,
+    customerName: order.customerName,
+    hasShippingAddress: !!order.shippingAddress,
+    shippingAddress: order.shippingAddress?.addressLine1 || 'N/A',
+  });
+
   // Validate order data
   if (!order.items || order.items.length === 0) {
+    console.error('❌ الطلب لا يحتوي على منتجات');
     return '⚠️ طلب بدون منتجات';
+  }
+
+  if (!order.orderNumber) {
+    console.error('❌ رقم الطلب غير موجود');
+  }
+
+  if (!order.customerName || !order.customerPhone) {
+    console.error('❌ معلومات العميل ناقصة');
+  }
+
+  if (!order.shippingAddress) {
+    console.error('❌ عنوان التوصيل غير موجود');
   }
 
   const itemsList = order.items
@@ -301,9 +323,11 @@ function formatOrderMessage(order: Order, statusUpdate?: { oldStatus: string; ne
     'bank-transfer': '🏦 تحويل بنكي',
   };
 
-  // Determine delivery type
-  const isPickup = order.shippingAddress.addressLine1.includes('استلام من المتجر') || 
-                   order.shippingMethod === 'same-day';
+  // Determine delivery type - with safe check
+  const addressLine1 = order.shippingAddress?.addressLine1 || '';
+  const shippingMethod = order.shippingMethod || 'standard';
+  const isPickup = addressLine1.includes('استلام من المتجر') || 
+                   shippingMethod === 'same-day';
   const deliveryTypeEmoji = isPickup ? '🏪' : '🚚';
   const deliveryTypeText = isPickup ? '📦 الاستلام من المتجر' : '🚚 التوصيل إلى العنوان';
 
@@ -350,14 +374,14 @@ ${order.customerEmail ? `• البريد: ${order.customerEmail}` : ''}
 ${isPickup ? `┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 🏪 <b>الاستلام من المتجر</b>
 ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-📍 ${order.shippingAddress.city || 'العنوان من الإعدادات'}` : `┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+📍 ${order.shippingAddress?.city || 'العنوان من الإعدادات'}` : `┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 🚚 <b>عنوان التوصيل</b>
 ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-• المستلم: <b>${order.shippingAddress.fullName}</b>
-• العنوان: ${order.shippingAddress.addressLine1}
-${order.shippingAddress.city ? `• المدينة: ${order.shippingAddress.city}` : ''}
-${order.shippingAddress.phone ? `• هاتف المستلم: <code>${order.shippingAddress.phone}</code>` : ''}
-${order.shippingAddress.addressLine2 ? `• ملاحظات: ${order.shippingAddress.addressLine2}` : ''}`}
+• المستلم: <b>${order.shippingAddress?.fullName || order.customerName || 'غير محدد'}</b>
+• العنوان: ${order.shippingAddress?.addressLine1 || 'غير محدد'}
+${order.shippingAddress?.city ? `• المدينة: ${order.shippingAddress.city}` : ''}
+${order.shippingAddress?.phone ? `• هاتف المستلم: <code>${order.shippingAddress.phone}</code>` : ''}
+${order.shippingAddress?.addressLine2 ? `• ملاحظات: ${order.shippingAddress.addressLine2}` : ''}`}
 
 ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
 🛒 <b>المنتجات (${order.items.length})</b>

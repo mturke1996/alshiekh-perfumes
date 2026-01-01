@@ -237,10 +237,40 @@ export default function CheckoutPage() {
       const docRef = await addDoc(collection(db, 'orders'), cleanOrderData);
 
       // Send Telegram notification
+      // Ensure all required fields are present
       const orderWithId: Order = {
         id: docRef.id,
         ...cleanOrderData,
+        // Ensure createdAt is properly set
+        createdAt: cleanOrderData.createdAt || Timestamp.now(),
+        // Ensure shippingAddress exists
+        shippingAddress: cleanOrderData.shippingAddress || {
+          fullName: customerName,
+          addressLine1: 'استلام من المتجر',
+          addressLine2: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          country: 'ليبيا',
+          phone: customerPhone,
+        },
+        // Ensure items exist
+        items: cleanOrderData.items || [],
+        // Ensure orderNumber exists
+        orderNumber: cleanOrderData.orderNumber || 'N/A',
+        // Ensure customer info exists
+        customerName: cleanOrderData.customerName || customerName,
+        customerPhone: cleanOrderData.customerPhone || customerPhone,
+        customerEmail: cleanOrderData.customerEmail || '',
       } as Order;
+      
+      console.log('📦 بيانات الطلب:', {
+        id: orderWithId.id,
+        orderNumber: orderWithId.orderNumber,
+        itemsCount: orderWithId.items?.length || 0,
+        customerName: orderWithId.customerName,
+        total: orderWithId.total,
+      });
       
       // Send Telegram notification - don't wait for it to complete
       // This ensures user experience is not blocked
@@ -251,10 +281,11 @@ export default function CheckoutPage() {
           if (result) {
             console.log('✅ تم إرسال إشعار Telegram بنجاح');
           } else {
-            console.warn('⚠️ فشل إرسال إشعار Telegram - قد تكون الإعدادات غير صحيحة');
+            console.warn('⚠️ فشل إرسال إشعار Telegram - راجع Console للأخطاء التفصيلية');
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('❌ خطأ في إرسال إشعار Telegram:', error);
+          console.error('❌ تفاصيل الخطأ:', error.message, error.stack);
         }
       })();
 
