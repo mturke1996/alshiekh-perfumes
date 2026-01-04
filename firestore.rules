@@ -67,8 +67,9 @@ service cloud.firestore {
     }
     
     // Telegram Chats - anyone can read (for sending notifications), only admins can write
+    // IMPORTANT: This allows reading without authentication so Telegram notifications work from checkout
     match /telegramChats/{chatId} {
-      allow read: if true; // Allow reading for sending Telegram notifications
+      allow read: if true; // Allow reading for sending Telegram notifications (no auth required)
       allow write: if isAdmin();
     }
     

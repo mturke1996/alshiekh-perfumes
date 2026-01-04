@@ -554,8 +554,8 @@ export interface SiteSettings {
   // Notifications
   telegramBotToken?: string;
   telegramChatId?: string;
+  telegramAdditionalChatIds?: string[];
   emailNotifications?: boolean;
-  telegramChats?: TelegramChat[];
   
   // Hero Images
   heroImages?: string[];
@@ -565,19 +565,6 @@ export interface SiteSettings {
   maintenanceMessage?: string;
   maintenanceMessageAr?: string;
 
-  updatedAt?: Timestamp;
-}
-
-// ============================================
-// Telegram Chat Types
-// ============================================
-
-export interface TelegramChat {
-  id: string;
-  name: string;
-  chatId: string;
-  active: boolean;
-  createdAt: Timestamp;
   updatedAt?: Timestamp;
 }
 

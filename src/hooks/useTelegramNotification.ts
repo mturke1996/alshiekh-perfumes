@@ -44,8 +44,10 @@ export function useTelegramNotification() {
             
             // Only send notification if order was created in the last 60 seconds
             if (diffInSeconds < 60) {
-              console.log('New order detected, sending Telegram notification...');
-              await sendTelegramOrderNotification(order);
+              console.log('📦 تم اكتشاف طلب جديد، إرسال إشعار Telegram...');
+              sendTelegramOrderNotification(order).catch((error) => {
+                console.error('❌ خطأ في إرسال إشعار Telegram:', error);
+              });
             }
           }
         }

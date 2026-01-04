@@ -193,7 +193,7 @@ export default function EnhancedProductCard({
                       {formatCurrency(finalPrice, "LYD")}
                     </span>
                     <span className="text-lg text-gray-400 line-through">
-                      {product.price.toFixed(2)}
+                      {Math.round(product.price)}
                     </span>
                   </div>
                 ) : (
@@ -249,14 +249,14 @@ export default function EnhancedProductCard({
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      whileHover={{ y: -8 }}
+      whileHover={{ y: -4 }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
-      className="group relative bg-white rounded-2xl shadow-sm hover:shadow-luxury border border-gray-100 hover:border-brand-maroon-200 transition-all duration-500 overflow-hidden hover:-translate-y-1"
+      className="group relative bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 hover:border-brand-maroon-200 transition-all duration-300 overflow-hidden"
     >
       <Link to={`/product/${product.id}`}>
         {/* Image Container */}
-        <div className="relative aspect-square overflow-hidden bg-gray-100">
+        <div className="relative aspect-square overflow-hidden bg-gray-50">
           <AnimatePresence mode="wait">
             <motion.img
               key={imageIndex}
@@ -279,16 +279,16 @@ export default function EnhancedProductCard({
           )}
 
           {/* Badges */}
-          <div className="absolute top-3 right-3 flex flex-col gap-2 z-10">
+          <div className="absolute top-2 right-2 flex flex-col gap-1.5 z-10">
             {badges.map((badge, index) => (
               <motion.div
                 key={index}
                 initial={{ scale: 0, x: 20 }}
                 animate={{ scale: 1, x: 0 }}
                 transition={{ delay: index * 0.1, type: "spring" }}
-                className={`${badge.color} text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 shadow-md backdrop-blur-sm border border-white/20`}
+                className={`${badge.color} text-white px-2 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1 shadow-md backdrop-blur-sm border border-white/20`}
               >
-                {badge.icon && <badge.icon size={14} />}
+                {badge.icon && <badge.icon size={12} />}
                 {badge.text}
               </motion.div>
             ))}
@@ -353,7 +353,7 @@ export default function EnhancedProductCard({
           {/* Favorite Button */}
           <motion.button
             onClick={handleToggleFavorite}
-            className={`absolute top-3 left-3 p-2.5 rounded-full backdrop-blur-sm transition-all z-10 ${
+            className={`absolute top-2 left-2 p-2 rounded-full backdrop-blur-sm transition-all z-10 ${
               isFavorite
                 ? "bg-red-500 text-white"
                 : "bg-white/80 text-gray-600 hover:bg-white"
@@ -361,45 +361,44 @@ export default function EnhancedProductCard({
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
           >
-            <Heart size={18} fill={isFavorite ? "currentColor" : "none"} />
+            <Heart size={16} fill={isFavorite ? "currentColor" : "none"} />
           </motion.button>
 
           {/* Quick Add to Cart Button - Always Visible on Mobile */}
           {product.inStock && (
             <motion.button
               onClick={handleAddToCart}
-              className="absolute bottom-3 right-3 p-3 bg-gradient-to-r from-brand-maroon-600 to-brand-maroon-700 text-white rounded-full shadow-lg z-10 hover:shadow-xl transition-all md:hidden"
+              className="absolute bottom-2 right-2 p-2.5 bg-gradient-to-r from-brand-maroon-600 to-brand-maroon-700 text-white rounded-full shadow-lg z-10 hover:shadow-xl transition-all md:hidden"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               title="أضف للسلة"
             >
-              <ShoppingCart size={18} />
+              <ShoppingCart size={16} />
             </motion.button>
           )}
         </div>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="p-3">
           {/* Brand */}
-          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">
+          <p className="text-[10px] text-gray-500 mb-0.5 uppercase tracking-wide">
             {product.brandAr}
           </p>
 
           {/* Title */}
-          <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-2 min-h-[2.5rem]">
+          <h3 className="text-sm font-bold text-gray-900 mb-1.5 line-clamp-2 min-h-[2rem] leading-tight">
             {product.nameAr}
           </h3>
 
-
           {/* Details */}
-          <div className="flex flex-wrap gap-1.5 mb-3">
+          <div className="flex flex-wrap gap-1 mb-2">
             {product.size && (
-              <span className="px-2 py-0.5 bg-gray-100 rounded-md text-xs">
+              <span className="px-1.5 py-0.5 bg-gray-100 rounded text-[10px]">
                 {product.sizeAr || product.size}
               </span>
             )}
             {product.concentration && (
-              <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-xs">
+              <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px]">
                 {product.concentrationAr}
               </span>
             )}
@@ -410,22 +409,22 @@ export default function EnhancedProductCard({
             <div>
               {hasDiscount ? (
                 <div className="flex flex-col">
-                  <span className="text-lg font-bold text-red-600">
+                  <span className="text-base font-bold text-red-600">
                     {formatCurrency(finalPrice, "LYD")}
                   </span>
-                  <span className="text-xs text-gray-400 line-through">
-                    {product.price.toFixed(0)}
+                  <span className="text-[10px] text-gray-400 line-through">
+                    {Math.round(product.price)}
                   </span>
                 </div>
               ) : (
-                <span className="text-lg font-bold text-gray-900">
+                <span className="text-base font-bold text-gray-900">
                   {formatCurrency(product.price, "LYD")}
                 </span>
               )}
             </div>
 
-            <motion.div whileHover={{ x: -5 }} className="text-blue-600">
-              <ArrowRight size={20} />
+            <motion.div whileHover={{ x: -3 }} className="text-blue-600">
+              <ArrowRight size={16} />
             </motion.div>
           </div>
         </div>

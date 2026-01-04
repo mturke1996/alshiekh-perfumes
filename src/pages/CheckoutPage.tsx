@@ -272,20 +272,12 @@ export default function CheckoutPage() {
         total: orderWithId.total,
       });
       
-      // Send Telegram notification - don't wait for it to complete
-      // This ensures user experience is not blocked
+      // Send Telegram notification (runs in background)
       (async () => {
         try {
-          console.log('📤 بدء إرسال إشعار Telegram...');
-          const result = await sendTelegramOrderNotification(orderWithId);
-          if (result) {
-            console.log('✅ تم إرسال إشعار Telegram بنجاح');
-          } else {
-            console.warn('⚠️ فشل إرسال إشعار Telegram - راجع Console للأخطاء التفصيلية');
-          }
+          await sendTelegramOrderNotification(orderWithId);
         } catch (error: any) {
           console.error('❌ خطأ في إرسال إشعار Telegram:', error);
-          console.error('❌ تفاصيل الخطأ:', error.message, error.stack);
         }
       })();
 
@@ -328,7 +320,7 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
         <div className="flex items-center justify-between p-4">
@@ -343,33 +335,33 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmitOrder} className="space-y-6 px-4 py-6">
+      <form onSubmit={handleSubmitOrder} className="space-y-3 px-3 py-3">
         {/* Delivery Type */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          className="bg-white rounded-xl p-3 shadow-sm border border-gray-100"
         >
-          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Package className="text-brand-maroon-600" size={20} />
+          <h2 className="text-sm font-bold text-gray-900 mb-2.5 flex items-center gap-1.5">
+            <Package className="text-brand-maroon-600" size={16} />
             طريقة الاستلام
           </h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => setDeliveryType('delivery')}
-              className={`p-4 rounded-xl border-2 transition-all ${
+              className={`p-2.5 rounded-lg border-2 transition-all ${
                 deliveryType === 'delivery'
                   ? 'border-brand-maroon-600 bg-brand-maroon-50'
                   : 'border-gray-200 bg-gray-50'
               }`}
             >
-              <Truck className={`mx-auto mb-2 ${deliveryType === 'delivery' ? 'text-brand-maroon-600' : 'text-gray-400'}`} size={24} />
-              <p className={`font-bold ${deliveryType === 'delivery' ? 'text-brand-maroon-600' : 'text-gray-700'}`}>
+              <Truck className={`mx-auto mb-1 ${deliveryType === 'delivery' ? 'text-brand-maroon-600' : 'text-gray-400'}`} size={18} />
+              <p className={`text-xs font-bold ${deliveryType === 'delivery' ? 'text-brand-maroon-600' : 'text-gray-700'}`}>
                 التوصيل
               </p>
               {settings?.shippingCost && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-[10px] text-gray-500 mt-0.5">
                   {settings.shippingCost} د.ل
                 </p>
               )}
@@ -377,17 +369,17 @@ export default function CheckoutPage() {
             <button
               type="button"
               onClick={() => setDeliveryType('pickup')}
-              className={`p-4 rounded-xl border-2 transition-all ${
+              className={`p-2.5 rounded-lg border-2 transition-all ${
                 deliveryType === 'pickup'
                   ? 'border-brand-maroon-600 bg-brand-maroon-50'
                   : 'border-gray-200 bg-gray-50'
               }`}
             >
-              <Package className={`mx-auto mb-2 ${deliveryType === 'pickup' ? 'text-brand-maroon-600' : 'text-gray-400'}`} size={24} />
-              <p className={`font-bold ${deliveryType === 'pickup' ? 'text-brand-maroon-600' : 'text-gray-700'}`}>
+              <Package className={`mx-auto mb-1 ${deliveryType === 'pickup' ? 'text-brand-maroon-600' : 'text-gray-400'}`} size={18} />
+              <p className={`text-xs font-bold ${deliveryType === 'pickup' ? 'text-brand-maroon-600' : 'text-gray-700'}`}>
                 استلام من المتجر
               </p>
-              <p className="text-xs text-gray-500 mt-1">مجاناً</p>
+              <p className="text-[10px] text-gray-500 mt-0.5">مجاناً</p>
             </button>
           </div>
         </motion.div>
@@ -397,27 +389,27 @@ export default function CheckoutPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          className="bg-white rounded-xl p-3 shadow-sm border border-gray-100"
         >
-          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <User className="text-brand-maroon-600" size={20} />
+          <h2 className="text-sm font-bold text-gray-900 mb-2.5 flex items-center gap-1.5">
+            <User className="text-brand-maroon-600" size={16} />
             معلومات العميل
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-2.5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
                 الاسم الكامل <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-maroon-500"
+                className="w-full px-3 py-2 text-sm bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-maroon-500"
                 placeholder="أدخل اسمك الكامل"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1.5">
                 رقم الهاتف <span className="text-red-500">*</span>
               </label>
               <input
@@ -429,10 +421,10 @@ export default function CheckoutPage() {
                   setCustomerPhone(value);
                 }}
                 maxLength={13}
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-maroon-500"
+                className="w-full px-3 py-2 text-sm bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-maroon-500"
                 placeholder="0912345678"
               />
-              <p className="text-xs text-gray-500 mt-1">يجب أن يبدأ بـ 091 أو 092 أو 093 أو 094 (9-10 أرقام)</p>
+              <p className="text-[10px] text-gray-500 mt-1">يجب أن يبدأ بـ 091 أو 092 أو 093 أو 094</p>
             </div>
           </div>
         </motion.div>
@@ -443,23 +435,23 @@ export default function CheckoutPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+            className="bg-white rounded-xl p-3 shadow-sm border border-gray-100"
           >
-            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <MapPin className="text-brand-maroon-600" size={20} />
+            <h2 className="text-sm font-bold text-gray-900 mb-2.5 flex items-center gap-1.5">
+              <MapPin className="text-brand-maroon-600" size={16} />
               عنوان التوصيل
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-2.5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">
                   العنوان <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={shippingAddress.addressLine1}
                   onChange={(e) => setShippingAddress({ ...shippingAddress, addressLine1: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-maroon-500"
-                  placeholder="أدخل العنوان الكامل (الشارع، المنطقة، المدينة)"
+                  rows={2}
+                  className="w-full px-3 py-2 text-sm bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-maroon-500"
+                  placeholder="أدخل العنوان الكامل"
                 />
               </div>
             </div>
@@ -471,17 +463,17 @@ export default function CheckoutPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          className="bg-white rounded-xl p-3 shadow-sm border border-gray-100"
         >
-          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <CreditCard className="text-brand-maroon-600" size={20} />
+          <h2 className="text-sm font-bold text-gray-900 mb-2.5 flex items-center gap-1.5">
+            <CreditCard className="text-brand-maroon-600" size={16} />
             طريقة الدفع
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-2">
             <button
               type="button"
               onClick={() => setPaymentMethod('cash-on-delivery')}
-              className={`w-full p-4 rounded-xl border-2 transition-all text-right ${
+              className={`w-full p-2.5 rounded-lg border-2 transition-all text-right ${
                 paymentMethod === 'cash-on-delivery'
                   ? 'border-brand-maroon-600 bg-brand-maroon-50'
                   : 'border-gray-200 bg-gray-50'
@@ -489,13 +481,13 @@ export default function CheckoutPage() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`font-bold ${paymentMethod === 'cash-on-delivery' ? 'text-brand-maroon-600' : 'text-gray-700'}`}>
+                  <p className={`text-sm font-bold ${paymentMethod === 'cash-on-delivery' ? 'text-brand-maroon-600' : 'text-gray-700'}`}>
                     الدفع عند الاستلام
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">ادفع نقداً عند {deliveryType === 'delivery' ? 'التوصيل' : 'الاستلام'}</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">ادفع نقداً عند {deliveryType === 'delivery' ? 'التوصيل' : 'الاستلام'}</p>
                 </div>
                 {paymentMethod === 'cash-on-delivery' && (
-                  <CheckCircle2 className="text-brand-maroon-600" size={24} />
+                  <CheckCircle2 className="text-brand-maroon-600" size={18} />
                 )}
               </div>
             </button>
@@ -503,10 +495,10 @@ export default function CheckoutPage() {
         </motion.div>
 
         {/* Compact Order Summary & Submit Button */}
-        <div className="sticky bottom-0 bg-white border-t-2 border-gray-200 shadow-2xl p-4 z-50">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-gray-600">الإجمالي:</span>
-            <span className="text-xl font-bold text-brand-maroon-600">
+        <div className="sticky bottom-0 bg-white border-t-2 border-gray-200 shadow-2xl p-3 z-50">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-gray-600">الإجمالي:</span>
+            <span className="text-base font-bold text-brand-maroon-600">
               {formatCurrency(finalTotal, 'LYD')}
             </span>
           </div>
@@ -514,16 +506,16 @@ export default function CheckoutPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-gradient-to-r from-brand-maroon-600 to-brand-maroon-700 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-2.5 bg-gradient-to-r from-brand-maroon-600 to-brand-maroon-700 text-white rounded-lg font-bold text-sm shadow-lg hover:shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                 <span>جاري إنشاء الطلب...</span>
               </>
             ) : (
               <>
-                <CheckCircle2 size={22} />
+                <CheckCircle2 size={16} />
                 <span>تأكيد الطلب</span>
               </>
             )}

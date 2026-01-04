@@ -84,7 +84,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-32">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-24">
       {/* Header */}
       <div className="bg-white/95 backdrop-blur-xl border-b border-gray-200/50 sticky top-0 z-40 shadow-sm">
         <div className="flex items-center justify-between p-4">
@@ -119,7 +119,7 @@ export default function CartPage() {
         </div>
       </div>
 
-      <div className="space-y-3 px-4 py-4">
+      <div className="space-y-2 px-3 py-2">
         {/* Cart Items */}
         <AnimatePresence>
           {items
@@ -145,13 +145,13 @@ export default function CartPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95, x: 20 }}
                 transition={{ delay: index * 0.03, type: "spring", stiffness: 300 }}
-                className="bg-white rounded-2xl p-4 shadow-md border border-gray-100 hover:shadow-lg transition-all active:scale-[0.98]"
+                className="bg-white rounded-xl p-2.5 shadow-sm border border-gray-100 active:scale-[0.98]"
               >
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   {/* Product Image */}
                   <Link
                     to={`/product/${product.id}`}
-                    className="relative w-28 h-28 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 flex-shrink-0 group"
+                    className="relative w-20 h-20 rounded-lg overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 flex-shrink-0 group"
                   >
                     <img
                       src={product.thumbnail || product.images[0]}
@@ -159,7 +159,7 @@ export default function CartPage() {
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                     {product.discount && (
-                      <div className="absolute top-2 right-2 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs px-2.5 py-1 rounded-full font-bold shadow-md">
+                      <div className="absolute top-1 right-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-[10px] px-1.5 py-0.5 rounded font-bold">
                         -{product.discount}%
                       </div>
                     )}
@@ -169,19 +169,19 @@ export default function CartPage() {
                   <div className="flex-1 min-w-0 flex flex-col justify-between">
                     <div>
                       <Link to={`/product/${product.id}`}>
-                        <h3 className="font-bold text-gray-900 mb-1 line-clamp-2 hover:text-brand-maroon-600 transition-colors text-base leading-tight">
+                        <h3 className="font-bold text-gray-900 mb-0.5 line-clamp-2 hover:text-brand-maroon-600 transition-colors text-sm leading-tight">
                           {product.nameAr || product.name}
                         </h3>
                       </Link>
-                      <p className="text-xs text-gray-500 mb-2">{product.brandAr || product.brand}</p>
+                      <p className="text-[10px] text-gray-500 mb-1">{product.brandAr || product.brand}</p>
 
                       {/* Price */}
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-xl font-bold text-brand-maroon-600">
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <span className="text-base font-bold text-brand-maroon-600">
                           {formatCurrency(finalPrice, 'LYD')}
                         </span>
                         {product.discount && (
-                          <span className="text-sm text-gray-400 line-through">
+                          <span className="text-xs text-gray-400 line-through">
                             {formatCurrency(product.price, 'LYD')}
                           </span>
                         )}
@@ -189,23 +189,23 @@ export default function CartPage() {
                     </div>
 
                     {/* Quantity Controls & Actions */}
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-1 border border-gray-200">
+                        <div className="flex items-center gap-1 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-0.5 border border-gray-200">
                           <button
                             onClick={() => handleQuantityChange(product.id, quantity - 1)}
-                            className="w-9 h-9 rounded-lg bg-white flex items-center justify-center hover:bg-brand-maroon-50 hover:text-brand-maroon-600 active:scale-90 transition-all shadow-sm"
+                            className="w-7 h-7 rounded-md bg-white flex items-center justify-center hover:bg-brand-maroon-50 hover:text-brand-maroon-600 active:scale-90 transition-all"
                           >
-                            <Minus size={16} className="text-gray-700" />
+                            <Minus size={12} className="text-gray-700" />
                           </button>
-                          <span className="text-sm font-bold text-gray-900 w-10 text-center">
+                          <span className="text-xs font-bold text-gray-900 w-6 text-center">
                             {quantity}
                           </span>
                           <button
                             onClick={() => handleQuantityChange(product.id, quantity + 1)}
-                            className="w-9 h-9 rounded-lg bg-white flex items-center justify-center hover:bg-brand-maroon-50 hover:text-brand-maroon-600 active:scale-90 transition-all shadow-sm"
+                            className="w-7 h-7 rounded-md bg-white flex items-center justify-center hover:bg-brand-maroon-50 hover:text-brand-maroon-600 active:scale-90 transition-all"
                           >
-                            <Plus size={16} className="text-gray-700" />
+                            <Plus size={12} className="text-gray-700" />
                           </button>
                         </div>
 
@@ -215,16 +215,16 @@ export default function CartPage() {
                             removeItem(product.id);
                             toast.success('تم حذف المنتج');
                           }}
-                          className="p-2.5 text-red-600 hover:bg-red-50 rounded-xl transition-all active:scale-90"
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-all active:scale-90"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={14} />
                         </button>
                       </div>
 
                       {/* Item Total */}
-                      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                        <span className="text-sm text-gray-500 font-medium">الإجمالي:</span>
-                        <span className="text-lg font-bold text-brand-maroon-600">
+                      <div className="flex items-center justify-between pt-1 border-t border-gray-100">
+                        <span className="text-xs text-gray-500 font-medium">الإجمالي:</span>
+                        <span className="text-sm font-bold text-brand-maroon-600">
                           {formatCurrency(finalPrice * quantity, 'LYD')}
                         </span>
                       </div>
@@ -240,11 +240,11 @@ export default function CartPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl p-4 shadow-lg border border-gray-200 sticky bottom-20"
+          className="bg-white rounded-xl p-3 shadow-lg border border-gray-200 sticky bottom-20"
         >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-gray-600">الإجمالي:</span>
-            <span className="text-2xl font-bold text-brand-maroon-600">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-gray-600">الإجمالي:</span>
+            <span className="text-lg font-bold text-brand-maroon-600">
               {formatCurrency(total, 'LYD')}
             </span>
           </div>
@@ -252,16 +252,16 @@ export default function CartPage() {
           <button
             onClick={handleCheckout}
             disabled={loading}
-            className="w-full py-3.5 bg-gradient-to-r from-brand-maroon-600 to-brand-maroon-700 text-white rounded-xl font-bold shadow-lg hover:shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-2.5 bg-gradient-to-r from-brand-maroon-600 to-brand-maroon-700 text-white rounded-lg font-bold shadow-lg hover:shadow-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
           >
             {loading ? (
               <>
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                 <span>جاري المعالجة...</span>
               </>
             ) : (
               <>
-                <ShoppingCart size={20} />
+                <ShoppingCart size={16} />
                 <span>إتمام الطلب</span>
               </>
             )}

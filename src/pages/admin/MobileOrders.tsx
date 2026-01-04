@@ -184,6 +184,7 @@ export default function MobileOrders() {
           oldStatus,
           newStatus,
         });
+        console.log(`✅ تم إرسال إشعار Telegram لتحديث حالة الطلب #${updatedOrder.orderNumber}`);
       } catch (telegramError) {
         console.error("Error sending Telegram notification:", telegramError);
         // Don't fail the update if Telegram fails

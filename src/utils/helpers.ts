@@ -7,13 +7,13 @@
 // ============================================
 
 /**
- * تنسيق السعر بالدينار الليبي
+ * تنسيق السعر بالدينار الليبي (رقم صحيح بدون كسور)
  */
 export const formatPrice = (price: number): string => {
   return new Intl.NumberFormat('ar-LY', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(price);
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(Math.round(price));
 };
 
 /**

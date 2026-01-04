@@ -56,34 +56,52 @@ export default function ContactPage() {
     setLoading(true);
 
     try {
-      // Save to Firestore
-      await addDoc(collection(db, 'contactMessages'), {
+      // Prepare email - only if provided and valid
+      const emailValue = formData.email.trim();
+      const emailToSave = emailValue && emailValue.includes('@') && emailValue.length > 3 ? emailValue : null;
+
+      // Prepare data object - only include email if it exists
+      const messageData: any = {
         name: formData.name.trim(),
         phone: formData.phone.trim(),
-        email: formData.email.trim() || undefined,
         subject: formData.subject.trim(),
         message: formData.message.trim(),
         read: false,
         replied: false,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
-      });
+      };
 
-      // Send to Telegram
+      // Only add email if it's valid
+      if (emailToSave) {
+        messageData.email = emailToSave;
+      }
+
+      // Save to Firestore
+      await addDoc(collection(db, 'contactMessages'), messageData);
+
+      // Send to Telegram (email is optional)
       toast.loading('جاري إرسال الرسالة...', { id: 'sending-message' });
-      const telegramSent = await sendContactMessageToTelegram(
-        formData.name.trim(),
-        formData.phone.trim(),
-        formData.email.trim() || undefined,
-        formData.subject.trim(),
-        formData.message.trim()
-      );
+      
+      try {
+        const telegramSent = await sendContactMessageToTelegram(
+          formData.name.trim(),
+          formData.phone.trim(),
+          emailToSave || undefined,
+          formData.subject.trim(),
+          formData.message.trim()
+        );
 
-      toast.dismiss('sending-message');
+        toast.dismiss('sending-message');
 
-      if (telegramSent) {
-        toast.success('✅ تم إرسال الرسالة بنجاح! سنتواصل معك قريباً');
-      } else {
+        if (telegramSent) {
+          toast.success('✅ تم إرسال الرسالة بنجاح! سنتواصل معك قريباً');
+        } else {
+          toast.success('✅ تم حفظ الرسالة بنجاح! (ملاحظة: فشل إرسال إشعار Telegram)');
+        }
+      } catch (telegramError: any) {
+        console.error('Telegram error (non-blocking):', telegramError);
+        toast.dismiss('sending-message');
         toast.success('✅ تم حفظ الرسالة بنجاح! (ملاحظة: فشل إرسال إشعار Telegram)');
       }
 
@@ -96,11 +114,15 @@ export default function ContactPage() {
         message: '',
       });
     } catch (error: any) {
+      console.error('Error submitting contact form:', error);
       toast.dismiss('sending-message');
       
       let errorMessage = 'حدث خطأ في إرسال الرسالة. يرجى المحاولة مرة أخرى.';
+      
       if (error?.code === 'permission-denied') {
         errorMessage = 'ليس لديك صلاحية لإرسال الرسالة. تحقق من إعدادات Firestore.';
+      } else if (error?.message) {
+        errorMessage = `خطأ: ${error.message}`;
       }
       
       toast.error(errorMessage);
@@ -284,14 +306,14 @@ export default function ContactPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                البريد الإلكتروني (اختياري)
+                البريد الإلكتروني <span className="text-gray-400 text-xs">(اختياري)</span>
               </label>
               <input
-                type="email"
+                type="text"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-maroon-500"
-                placeholder="email@example.com"
+                placeholder="email@example.com (اختياري)"
               />
             </div>
 
